@@ -10,12 +10,12 @@ import { useParams } from "next/navigation";
 export default function VerifyCertificatePage() {
 	const { certificate_code: code } = useParams<{ certificate_code: string }>();
 	const verifyMutation = useVerifyCertificate();
-	const [cert, setCert] = useState<Certificate | null>(null);
+	const [certs, setCerts] = useState<Certificate[] | null>(null);
 
 	useEffect(() => {
 		if (code) {
 			verifyMutation.mutate(code, {
-				onSuccess: (data) => setCert(data),
+				onSuccess: (data) => setCerts(data),
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -30,16 +30,16 @@ export default function VerifyCertificatePage() {
 		);
 	}
 
-	if (verifyMutation.isError || !cert) {
+	if (verifyMutation.isError || !certs || certs.length === 0) {
 		return (
 			<div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 text-center">
 				<XCircle className="h-16 w-16 text-destructive" />
 				<h1 className="text-2xl font-bold text-foreground">
-					Certificado no válido
+					Certificado no encontrado
 				</h1>
 				<p className="text-muted-foreground max-w-md">
-					No pudimos encontrar un certificado con el código provisto. Por favor,
-					verifica que el enlace sea correcto o contacta a soporte.
+					No pudimos encontrar ningún certificado con el código o DNI provisto.
+					Verifica que el enlace sea correcto o contacta a soporte.
 				</p>
 				<Link
 					href="/"
@@ -55,71 +55,61 @@ export default function VerifyCertificatePage() {
 			<div className="mb-8 flex flex-col items-center space-y-4 text-center">
 				<CheckCircle2 className="h-16 w-16 text-green-500" />
 				<h1 className="text-3xl font-bold bg-linear-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-					Certificado Verificado
+					{certs.length === 1 ? "Certificado Verificado" : "Certificados Verificados"}
 				</h1>
 				<p className="text-muted-foreground">
-					Este certificado fue emitido el{" "}
-					{new Date(cert.issued_at).toLocaleDateString()}
+					{certs.length === 1
+						? "Hemos validado la autenticidad del siguiente certificado."
+						: `Hemos encontrado ${certs.length} certificados asociados.`}
 				</p>
-				<div className="inline-block rounded-full bg-muted mt-2 px-4 py-1.5 text-sm font-medium text-foreground">
-					Código: <span className="font-mono">{cert.certificate_code}</span>
-				</div>
 			</div>
 
-			<div className="grid gap-8 md:grid-cols-3">
-				{/* Certificate Display Area */}
-				<div className="md:col-span-2 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-					{cert.html_content ? (
-						<div
-							className="w-full relative bg-white"
-							style={{ aspectRatio: "1.414/1" }}>
-							<iframe
-								title="Certificado"
-								srcDoc={cert.html_content}
-								className="absolute inset-0 w-full h-full border-0"
-							/>
+			<div className="space-y-8">
+				{certs.map((cert) => (
+					<div key={cert.id} className="mx-auto max-w-2xl space-y-4">
+						<div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+							<div className="flex justify-between items-center mb-4">
+								<h3 className="text-lg font-semibold text-foreground">
+									Detalles del Certificado
+								</h3>
+								<div className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
+									Código: <span className="font-mono">{cert.certificate_code}</span>
+								</div>
+							</div>
+							
+							<dl className="space-y-4 text-sm">
+								<div>
+									<dt className="text-muted-foreground">Emitido el</dt>
+									<dd className="font-medium text-foreground">
+										{new Date(cert.issued_at).toLocaleDateString()}
+									</dd>
+								</div>
+								<div>
+									<dt className="text-muted-foreground">Alumno</dt>
+									<dd className="font-medium text-foreground break-all">
+										{cert.user_full_name ?? cert.user_id}
+									</dd>
+								</div>
+								<div>
+									<dt className="text-muted-foreground">Curso</dt>
+									<dd className="font-medium text-foreground break-all">
+										{cert.course_title ?? cert.course_id}
+									</dd>
+								</div>
+							</dl>
 						</div>
-					) : (
-						<div className="flex aspect-[1.414/1] w-full items-center justify-center bg-muted/30">
-							<p className="text-sm text-muted-foreground">
-								Vista previa del certificado no disponible.
-							</p>
-						</div>
-					)}
-				</div>
 
-				{/* Info Sidebar */}
-				<div className="space-y-6">
-					<div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-						<h3 className="mb-4 text-lg font-semibold text-foreground">
-							Detalles
-						</h3>
-						<dl className="space-y-4 text-sm">
-							<div>
-								<dt className="text-muted-foreground">ID de Usuario</dt>
-								<dd className="font-medium text-foreground break-all">
-									{cert.user_id}
-								</dd>
-							</div>
-							<div>
-								<dt className="text-muted-foreground">ID de Curso</dt>
-								<dd className="font-medium text-foreground break-all">
-									{cert.course_id}
-								</dd>
-							</div>
-						</dl>
+						{cert.pdf_url && (
+							<a
+								href={cert.pdf_url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm hover:shadow-md">
+								Descargar PDF Original
+							</a>
+						)}
 					</div>
-
-					{cert.pdf_url && (
-						<a
-							href={cert.pdf_url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm hover:shadow-md">
-							Descargar PDF Original
-						</a>
-					)}
-				</div>
+				))}
 			</div>
 		</div>
 	);

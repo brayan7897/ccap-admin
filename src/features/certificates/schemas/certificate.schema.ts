@@ -1,17 +1,17 @@
 import { z } from "zod";
 
 export const certificateCreateSchema = z.object({
-  user_id: z.string().uuid("Debe ser un UUID válido"),
-  course_id: z.string().uuid("Debe ser un UUID válido"),
-  drive_file_id: z.string().optional(),
-  pdf_url: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
-  html_content: z.string().optional(),
+  user_id: z.string().uuid("Debe seleccionar un estudiante (UUID inválido)"),
+  course_id: z.string().uuid("Debe seleccionar un curso (UUID inválido)"),
+  drive_file_id: z.string().optional().or(z.literal("")),
+  pdf_url: z.string().url("Debe ser una URL válida (ej. https://...)").optional().or(z.literal("")),
+  html_content: z.string().optional().or(z.literal("")),
 });
 
 export const certificateEditSchema = z.object({
-  drive_file_id: z.string().optional(),
-  pdf_url: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
-  html_content: z.string().optional(),
+  drive_file_id: z.string().optional().or(z.literal("")),
+  pdf_url: z.string().url("Debe ser una URL válida (ej. https://...)").optional().or(z.literal("")),
+  html_content: z.string().optional().or(z.literal("")),
 });
 
 export type CertificateCreateInput = z.infer<typeof certificateCreateSchema>;

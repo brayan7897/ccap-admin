@@ -1,51 +1,34 @@
 import { api } from "@/lib/api";
 import type { Enrollment } from "@/types";
 
+/** Raw API response may include flattened join fields not declared in Enrollment */
+type EnrollmentApiRecord = Enrollment & {
+  course_name?: string;
+  user_name?: string;
+  [key: string]: unknown;
+};
+
+function normalizeEnrollment(e: EnrollmentApiRecord): Enrollment {
+  return {
+    ...e,
+    course_title: e.course_title ?? e.course_name ?? undefined,
+    course_slug: e.course_slug ?? undefined,
+    course_type: e.course_type ?? undefined,
+    user_full_name: e.user_full_name ?? e.user_name ?? undefined,
+    user_email: e.user_email ?? undefined,
+  };
+}
+
 export const enrollmentsService = {
   async getAll(skip = 0, limit = 50, course_id?: string, user_id?: string): Promise<Enrollment[]> {
     const params = { skip, limit, ...(course_id && { course_id }), ...(user_id && { user_id }) };
-    if (process.env.NODE_ENV === "development") {
-      console.log("[enrollmentsService.getAll] params:", params);
-    }
-
-    const res = await api.get<Enrollment[]>("/enrollments/", {
-      params,
-    });
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("[enrollmentsService.getAll] response:", res.data);
-    }
-
-    return res.data.map((enrollment: any) => ({
-      ...enrollment,
-      course_title: enrollment.course_title ?? enrollment.course_name ?? undefined,
-      course_slug: enrollment.course_slug ?? undefined,
-      course_type: enrollment.course_type ?? undefined,
-      user_full_name: enrollment.user_full_name ?? enrollment.user_name ?? undefined,
-      user_email: enrollment.user_email ?? undefined,
-    }));
+    const res = await api.get<EnrollmentApiRecord[]>("/enrollments/", { params });
+    return res.data.map(normalizeEnrollment);
   },
 
   async getMyEnrollments(skip = 0, limit = 50): Promise<Enrollment[]> {
-    const params = { skip, limit };
-    if (process.env.NODE_ENV === "development") {
-      console.log("[enrollmentsService.getMyEnrollments] params:", params);
-    }
-
-    const res = await api.get<Enrollment[]>("/enrollments/my", { params });
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("[enrollmentsService.getMyEnrollments] response:", res.data);
-    }
-
-    return res.data.map((enrollment: any) => ({
-      ...enrollment,
-      course_title: enrollment.course_title ?? enrollment.course_name ?? undefined,
-      course_slug: enrollment.course_slug ?? undefined,
-      course_type: enrollment.course_type ?? undefined,
-      user_full_name: enrollment.user_full_name ?? enrollment.user_name ?? undefined,
-      user_email: enrollment.user_email ?? undefined,
-    }));
+    const res = await api.get<EnrollmentApiRecord[]>("/enrollments/my", { params: { skip, limit } });
+    return res.data.map(normalizeEnrollment);
   },
 
   async enroll(course_id: string): Promise<Enrollment> {

@@ -44,8 +44,8 @@ export default function CourseDetailPage({ params }: Props) {
 	}
 
 	const tabs: { key: Tab; label: string }[] = [
-		{ key: "info", label: "Informacion" },
-		...(isNew ? [] : [{ key: "modules" as Tab, label: "Modulos" }]),
+		{ key: "info", label: "Información" },
+		...(isNew ? [] : [{ key: "modules" as Tab, label: "Módulos" }]),
 	];
 
 	return (
@@ -64,7 +64,7 @@ export default function CourseDetailPage({ params }: Props) {
 				<p className="text-sm text-muted-foreground">
 					{isNew
 						? "Completa los datos para crear un nuevo curso."
-						: "Gestiona la informacion y el contenido de este curso."}
+						: "Gestiona la información y el contenido de este curso."}
 				</p>
 			</div>
 

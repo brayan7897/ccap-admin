@@ -26,19 +26,16 @@ export interface ConfirmUploadRequest {
 export const lessonsService = {
   async getAll(moduleId: string): Promise<Lesson[]> {
     const res = await api.get<Lesson[]>(`/modules/${moduleId}/lessons/`);
-    console.log(`[lessonsService.getAll] moduleId=${moduleId}`, res.data);
     return res.data;
   },
 
   async getById(moduleId: string, id: string): Promise<Lesson> {
     const res = await api.get<Lesson>(`/modules/${moduleId}/lessons/${id}`);
-    console.log(`[lessonsService.getById] moduleId=${moduleId} id=${id}`, res.data);
     return res.data;
   },
 
   async create(moduleId: string, data: Omit<LessonInput, "module_id">): Promise<Lesson> {
     const res = await api.post<Lesson>(`/modules/${moduleId}/lessons/`, data);
-    console.log(`[lessonsService.create] moduleId=${moduleId}`, res.data);
     return res.data;
   },
 

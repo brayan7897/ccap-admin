@@ -28,7 +28,6 @@ export function CertificateModal({
 	const { users } = useUsersCatalog();
 	const { courses } = useCoursesCatalog();
 
-	const [pdfFile, setPdfFile] = useState<File | null>(null);
 	const [isPending, setIsPending] = useState(false);
 
 	if (!isOpen) return null;
@@ -36,7 +35,6 @@ export function CertificateModal({
 	const isEditing = !!certificate;
 
 	function handleClose() {
-		setPdfFile(null);
 		onClose();
 	}
 
@@ -46,42 +44,11 @@ export function CertificateModal({
 		setIsPending(true);
 		try {
 			if (!isEditing) {
-				// Step 1 — create the certificate record
-				const newCert = await certificatesService.create(
-					data as CertificateCreateInput,
-				);
-				toast.success("Certificado creado.");
-
-				// Step 2 — if a PDF was selected, upload it via the dedicated endpoint
-				if (pdfFile) {
-					try {
-						await certificatesService.uploadPdf(newCert.id, pdfFile);
-						toast.success("PDF subido correctamente.");
-					} catch {
-						toast.error(
-							"Certificado creado, pero hubo un error al subir el PDF.",
-						);
-					}
-				}
+				await certificatesService.create(data as CertificateCreateInput);
+				toast.success("Certificado creado exitosamente.");
 			} else {
-				// Step 1 — patch editable metadata (html_content, pdf_url, drive_file_id)
-				await certificatesService.update(
-					certificate.id,
-					data as CertificateEditInput,
-				);
-				toast.success("Certificado actualizado.");
-
-				// Step 2 — upload/replace PDF if one was provided
-				if (pdfFile) {
-					try {
-						await certificatesService.uploadPdf(certificate.id, pdfFile);
-						toast.success("PDF subido correctamente.");
-					} catch {
-						toast.error(
-							"Cambios guardados, pero hubo un error al subir el PDF.",
-						);
-					}
-				}
+				await certificatesService.update(certificate.id, data as CertificateEditInput);
+				toast.success("Certificado actualizado exitosamente.");
 			}
 
 			qc.invalidateQueries({ queryKey: ["certificates"] });
@@ -125,8 +92,6 @@ export function CertificateModal({
 						isLoading={isPending}
 						users={users ?? []}
 						courses={courses ?? []}
-						pdfFile={pdfFile}
-						onPdfFileChange={setPdfFile}
 					/>
 				</div>
 			</div>

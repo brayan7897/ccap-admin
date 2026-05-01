@@ -19,6 +19,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
 	title: "CCAP Admin | Panel de Administración",
 	description: "Panel administrativo de CCAP GLOBAL S.R.L.",
+	icons: {
+		icon: "/favicon.svg",
+		shortcut: "/favicon.svg",
+	},
 };
 
 // Inline script to prevent flash of wrong theme before React hydrates

@@ -2,12 +2,18 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { notificationsService } from "@/features/notifications/services/notifications.service";
 import type { User } from "@/types";
-import type { UserCreateInput, ProfileEditInput } from "../schemas/user.schema";
+import type {
+  AdminEditProfileInput,
+  ProfileEditInput,
+  UpdateDocumentInput,
+  UserCreateInput,
+} from "../schemas/user.schema";
 import { usersService } from "../services/users.service";
+import { useDataStore } from "@/store/data-store";
 
 const QUERY_KEY = ["users"] as const;
+const CATALOG_KEY = ["catalog", "users"] as const;
 
 export function useUsers(skip = 0, limit = 50, is_active?: boolean) {
   return useQuery({
@@ -45,12 +51,16 @@ export function useAdminStats() {
   });
 }
 
+// ── Create ────────────────────────────────────────────────────────────────────
+
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: UserCreateInput) => usersService.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Usuario creado correctamente.");
     },
     onError: () => {
@@ -59,6 +69,65 @@ export function useCreateUser() {
   });
 }
 
+// ── Admin: update profile (first_name, last_name, phone, bio, avatar) ─────────
+// Calls PUT /admin/users/{id} — does NOT touch document or role.
+
+export function useUpdateUserProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: AdminEditProfileInput }) =>
+      usersService.updateProfile(userId, data),
+    onSuccess: (updatedUser) => {
+      // Patch individual cache entry
+      qc.setQueryData<User>([...QUERY_KEY, updatedUser.id], updatedUser);
+      // Patch list caches optimistically
+      qc.setQueriesData<User[]>(
+        { queryKey: QUERY_KEY, exact: false },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.map((u) => (u.id === updatedUser.id ? updatedUser : u));
+        },
+      );
+      qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
+      toast.success("Perfil del usuario actualizado.");
+    },
+    onError: () => {
+      toast.error("Error al actualizar el perfil del usuario.");
+    },
+  });
+}
+
+// ── Admin: update document (PATCH /users/{user_id}/document) ─────────────────
+
+export function useUpdateUserDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: UpdateDocumentInput }) =>
+      usersService.updateDocument(userId, data),
+    onSuccess: (updatedUser) => {
+      qc.setQueryData<User>([...QUERY_KEY, updatedUser.id], updatedUser);
+      qc.setQueriesData<User[]>(
+        { queryKey: QUERY_KEY, exact: false },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.map((u) => (u.id === updatedUser.id ? updatedUser : u));
+        },
+      );
+      qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
+      toast.success("Documento actualizado correctamente.");
+    },
+    onError: () => {
+      toast.error("Error al actualizar el documento. Verifica que no esté en uso.");
+    },
+  });
+}
+
+// ── Admin: activate / deactivate ─────────────────────────────────────────────
+
 export function useActivateUser() {
   const qc = useQueryClient();
   return useMutation({
@@ -66,6 +135,8 @@ export function useActivateUser() {
       usersService.setActive(id, is_active),
     onSuccess: (_, { is_active }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success(is_active ? "Usuario activado." : "Usuario desactivado.");
     },
     onError: () => {
@@ -73,6 +144,8 @@ export function useActivateUser() {
     },
   });
 }
+
+// ── Admin: approve / reject course access ─────────────────────────────────────
 
 export function useUpdateUserAccess() {
   const qc = useQueryClient();
@@ -92,10 +165,11 @@ export function useUpdateUserAccess() {
         },
       );
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success(
         status === "APPROVED" ? "Acceso aprobado." : "Acceso rechazado.",
       );
-      // Send automatic notification to the user
       try {
         qc.invalidateQueries({ queryKey: ["notifications"] });
       } catch {
@@ -108,6 +182,8 @@ export function useUpdateUserAccess() {
   });
 }
 
+// ── Admin: change role ────────────────────────────────────────────────────────
+
 export function useChangeUserRole() {
   const qc = useQueryClient();
   return useMutation({
@@ -115,6 +191,8 @@ export function useChangeUserRole() {
       usersService.changeRole(id, role_id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Rol actualizado correctamente.");
     },
     onError: () => {
@@ -123,12 +201,16 @@ export function useChangeUserRole() {
   });
 }
 
+// ── Admin: delete ─────────────────────────────────────────────────────────────
+
 export function useDeleteUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => usersService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      useDataStore.getState().invalidateUsers();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Usuario eliminado.");
     },
     onError: () => {
@@ -157,6 +239,30 @@ export function useUpdateMe() {
     },
     onError: () => {
       toast.error("Error al actualizar el perfil.");
+    },
+  });
+}
+
+// ── Password Resets ───────────────────────────────────────────────────────────
+
+export function usePendingPasswordResets() {
+  return useQuery({
+    queryKey: [...QUERY_KEY, "password-resets", "pending"],
+    queryFn: () => usersService.getPendingPasswordResets(),
+  });
+}
+
+export function useResetPassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, new_password }: { userId: string; new_password: string }) =>
+      usersService.resetPassword(userId, new_password),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: [...QUERY_KEY, "password-resets", "pending"] });
+      toast.success(data.detail || "Contraseña actualizada exitosamente.");
+    },
+    onError: () => {
+      toast.error("Error al restablecer la contraseña.");
     },
   });
 }

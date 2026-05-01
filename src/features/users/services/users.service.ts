@@ -1,6 +1,11 @@
 import { api } from "@/lib/api";
 import type { AdminStats, User } from "@/types";
-import type { UserCreateInput, UserEditInput } from "../schemas/user.schema";
+import type {
+  AdminEditProfileInput,
+  UpdateDocumentInput,
+  UserCreateInput,
+  UserEditInput,
+} from "../schemas/user.schema";
 
 export const usersService = {
   // ── Admin: list all users ─────────────────────────────────────────────────
@@ -10,16 +15,7 @@ export const usersService = {
     is_active?: boolean,
   ): Promise<User[]> {
     const params = { skip, limit, ...(is_active !== undefined && { is_active }) };
-    if (process.env.NODE_ENV === "development") {
-      console.log("[usersService.getAll] params:", params);
-    }
-
     const res = await api.get<User[]>("/admin/users", { params });
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("[usersService.getAll] response:", res.data);
-    }
-
     return res.data;
   },
 
@@ -41,21 +37,34 @@ export const usersService = {
     return res.data;
   },
 
+  // ── Admin: update profile fields of any user ──────────────────────────────
+  // Maps to PUT /admin/users/{id}
+  // Fields: first_name, last_name, phone_number, bio, avatar_url
+  // Role and activation are handled by dedicated endpoints below.
+  async updateProfile(userId: string, data: AdminEditProfileInput): Promise<User> {
+    const profilePayload: Record<string, unknown> = {
+      first_name: data.first_name,
+      last_name: data.last_name,
+    };
+    if (data.phone_number !== undefined) profilePayload.phone_number = data.phone_number || null;
+    if (data.bio !== undefined) profilePayload.bio = data.bio || null;
+    if (data.avatar_url !== undefined) profilePayload.avatar_url = data.avatar_url || null;
+
+    const res = await api.put<User>(`/admin/users/${userId}`, profilePayload);
+    return res.data;
+  },
+
+  // ── Admin: correct or replace a user's document ──────────────────────────
+  // Maps to PATCH /users/{user_id}/document
+  async updateDocument(userId: string, data: UpdateDocumentInput): Promise<User> {
+    const res = await api.patch<User>(`/users/${userId}/document`, data);
+    return res.data;
+  },
+
   // ── Admin: approve or reject course access ────────────────────────────────
+  // Maps to PATCH /users/{user_id}/access
   async updateAccess(userId: string, status: "APPROVED" | "REJECTED"): Promise<User> {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[usersService.updateAccess] payload:", {
-        userId,
-        status,
-      });
-    }
-
     const res = await api.patch<User>(`/users/${userId}/access`, { status });
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("[usersService.updateAccess] response:", res.data);
-    }
-
     return res.data;
   },
 
@@ -72,7 +81,9 @@ export const usersService = {
   },
 
   // ── CurrentUser: update own profile ──────────────────────────────────────
-  async updateMe(data: UserEditInput): Promise<User> {
+  async updateMe(
+    data: Pick<AdminEditProfileInput, "first_name" | "last_name" | "phone_number" | "bio" | "avatar_url">,
+  ): Promise<User> {
     const res = await api.put<User>("/users/me", data);
     return res.data;
   },
@@ -102,5 +113,17 @@ export const usersService = {
   // ── Admin: delete user ───────────────────────────────────────────────────
   async delete(id: string): Promise<void> {
     await api.delete(`/admin/users/${id}`);
+  },
+
+  // ── Admin: pending password resets ───────────────────────────────────────
+  async getPendingPasswordResets(): Promise<any[]> {
+    const res = await api.get<any[]>("/auth/password-reset/pending");
+    return res.data;
+  },
+
+  // ── Admin: reset user password ───────────────────────────────────────────
+  async resetPassword(userId: string, new_password: string): Promise<{ detail: string }> {
+    const res = await api.patch<{ detail: string }>(`/users/${userId}/password`, { new_password });
+    return res.data;
   },
 };

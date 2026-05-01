@@ -1,5 +1,6 @@
 import NextAuth, { type NextAuthConfig, CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { loginSchema } from "@/features/auth/schemas/login.schema";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
@@ -21,6 +22,15 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
+        // Validate shape/length before touching the network
+        const parsed = loginSchema.safeParse({
+          email: credentials.email,
+          password: credentials.password,
+        });
+        if (!parsed.success) {
+          return null;
+        }
+
         try {
           // 1. Login — the API returns access_token + user (with permissions)
           const tokenRes = await fetch(`${API_URL}/auth/login`, {
@@ -33,9 +43,7 @@ export const authConfig: NextAuthConfig = {
           });
 
           if (!tokenRes.ok) {
-            const body = await tokenRes.text();
-            console.error("[auth] login API error", { status: tokenRes.status, body });
-            throw new AuthError(`login_failed_${tokenRes.status}__${body.slice(0, 100)}`);
+            throw new AuthError(`login_failed_${tokenRes.status}`);
           }
 
           const loginData = (await tokenRes.json()) as {
@@ -63,18 +71,22 @@ export const authConfig: NextAuthConfig = {
             const meRes = await fetch(`${API_URL}/users/me`, {
               headers: { Authorization: `Bearer ${access_token}` },
             });
-            if (!meRes.ok) throw new AuthError(`me_failed_${meRes.status}`);
+            if (!meRes.ok) throw new AuthError("me_failed");
             apiUser = await meRes.json();
           }
 
           const roleCandidate = (apiUser?.role_name ?? "").toString().trim().toLowerCase();
           const permissions = (apiUser?.permissions ?? []).map((p) => p.toString().toLowerCase());
 
+          // Block inactive accounts before any other check
+          if (apiUser?.is_active === false) {
+            throw new AuthError("account_inactive");
+          }
+
           // Block only explicit student role
           const studentRoles = ["student", "alumno", "estudiante"];
           if (studentRoles.includes(roleCandidate)) {
-            console.warn("[auth] student is blocked", { roleCandidate, apiUser });
-            throw new AuthError(`student_blocked__role_${roleCandidate}`);
+            throw new AuthError("student_blocked");
           }
 
           return {
@@ -88,7 +100,7 @@ export const authConfig: NextAuthConfig = {
           };
         } catch (e) {
           if (e instanceof CredentialsSignin) throw e;
-          throw new AuthError(`exception__${String(e).slice(0, 120)}`);
+          throw new AuthError("auth_exception");
         }
       },
     }),

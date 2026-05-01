@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DataTable } from "@/components/tables/DataTable";
 import { buildRolesColumns } from "@/components/tables/columns/roles-columns";
 import { buildPermissionsColumns } from "@/components/tables/columns/permissions-columns";
@@ -50,15 +50,6 @@ export default function RolesPage() {
 		Permission | null | undefined
 	>(undefined);
 	const [isPermModalOpen, setIsPermModalOpen] = useState(false);
-
-	useEffect(() => {
-		if (rolesData) {
-			console.log("[RolesPage] rolesData", rolesData);
-		}
-		if (permsData) {
-			console.log("[RolesPage] permsData", permsData);
-		}
-	}, [rolesData, permsData]);
 
 	const rolesColumns = useMemo(
 		() =>

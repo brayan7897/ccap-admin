@@ -38,13 +38,27 @@ export function LoginForm() {
 
 			if (code.startsWith("student_blocked")) {
 				toast.error("Acceso denegado: esta cuenta tiene rol de estudiante.");
-			} else if (code.includes("login_failed_401") || code.includes("login_failed_403")) {
-				toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
+			} else if (code === "account_inactive") {
+				toast.error("Tu cuenta está desactivada. Contacta a un administrador.");
+			} else if (
+				code.includes("login_failed_401") ||
+				code.includes("login_failed_403")
+			) {
+				toast.error(
+					"Credenciales incorrectas. Verifica tu email y contraseña.",
+				);
 			} else if (code.includes("login_failed_")) {
-				toast.error("El servidor rechazó el inicio de sesión. Intenta más tarde.");
+				toast.error(
+					"El servidor rechazó el inicio de sesión. Intenta más tarde.",
+				);
 			} else {
 				toast.error("Error al iniciar sesión. Intenta de nuevo.");
 			}
+			return;
+		}
+
+		if (!result?.ok) {
+			toast.error("No se pudo iniciar sesión. Intenta de nuevo.");
 			return;
 		}
 

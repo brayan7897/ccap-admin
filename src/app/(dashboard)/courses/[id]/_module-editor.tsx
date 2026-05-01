@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,12 +38,10 @@ import {
 	FolderOpen,
 	HardDrive,
 	Layers,
-	Link,
 	Paperclip,
 	Pencil,
 	Plus,
 	Trash2,
-	UploadCloud,
 	X,
 	Check,
 } from "lucide-react";
@@ -566,7 +564,10 @@ function ResourcesSection({ lessonId }: ResourcesSectionProps) {
 				)}
 			</div>
 			<button
-				onClick={() => deleteResource.mutate(resource.id)}
+				onClick={() => {
+					if (window.confirm("¿Eliminar este recurso?"))
+						deleteResource.mutate(resource.id);
+				}}
 				className="ml-2 shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
 				title="Eliminar recurso">
 				<Trash2 className="h-3 w-3" />
@@ -829,7 +830,10 @@ function LessonRow({
 					<button
 						onClick={(e) => {
 							e.stopPropagation();
-							deleteLesson.mutate(lesson.id);
+							if (
+								window.confirm("¿Eliminar esta lección y todos sus recursos?")
+							)
+								deleteLesson.mutate(lesson.id);
 						}}
 						className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
 						title="Eliminar lección">
@@ -1004,7 +1008,12 @@ function ModuleCard({
 							<Pencil className="h-4 w-4" />
 						</button>
 						<button
-							onClick={() => onDelete(mod.id)}
+							onClick={() => {
+								if (
+									window.confirm("¿Eliminar este módulo y todas sus lecciones?")
+								)
+									onDelete(mod.id);
+							}}
 							className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
 							title="Eliminar módulo">
 							<Trash2 className="h-4 w-4" />

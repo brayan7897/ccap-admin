@@ -69,18 +69,7 @@ export function useDeleteCertificate() {
   });
 }
 
-export function useUploadCertificatePdf() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) =>
-      certificatesService.uploadPdf(id, file),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEY });
-      toast.success("PDF subido correctamente.");
-    },
-    onError: () => toast.error("Error al subir el PDF del certificado."),
-  });
-}
+
 
 export function useCertificate(id?: string) {
   return useQuery({

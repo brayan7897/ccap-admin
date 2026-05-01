@@ -18,35 +18,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
 
-const navGroups = [
-	{
-		label: "General",
-		items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard }],
-	},
-	{
-		label: "Contenido",
-		items: [
-			{ label: "Cursos", href: "/courses", icon: BookOpen },
-			{ label: "Categorías", href: "/categories", icon: Tag },
-		],
-	},
-	{
-		label: "Usuarios",
-		items: [
-			{ label: "Usuarios", href: "/users", icon: Users },
-			{ label: "Roles", href: "/roles", icon: ShieldCheck },
-		],
-	},
-	{
-		label: "Actividad",
-		items: [
-			{ label: "Inscripciones", href: "/enrollments", icon: GraduationCap },
-			{ label: "Certificados", href: "/certificates", icon: Award },
-			{ label: "Notificaciones", href: "/notifications", icon: Bell },
-		],
-	},
-];
-
 export function Sidebar() {
 	const { sidebarOpen, toggleSidebar } = useUiStore();
 	const pathname = usePathname();
@@ -139,13 +110,8 @@ export function Sidebar() {
 			<div
 				className={cn(
 					"flex h-16 shrink-0 items-center border-b border-sidebar-border px-4",
-					sidebarOpen ? "justify-between" : "justify-center",
+					sidebarOpen ? "justify-end" : "justify-center",
 				)}>
-				{sidebarOpen && (
-					<span className="text-base font-bold tracking-wide text-sidebar-foreground">
-						CCAP Admin
-					</span>
-				)}
 				<button
 					onClick={toggleSidebar}
 					aria-label="Alternar sidebar"

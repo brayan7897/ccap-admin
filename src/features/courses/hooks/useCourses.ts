@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { CourseInput } from "../schemas/course.schema";
 import { coursesService } from "../services/courses.service";
+import { useDataStore } from "@/store/data-store";
 
 const QUERY_KEY = ["courses"] as const;
+const CATALOG_KEY = ["catalog", "courses"] as const;
 
 export function useCourses(skip = 0, limit = 50) {
   return useQuery({
@@ -28,6 +30,8 @@ export function useCreateCourse() {
     mutationFn: (data: CourseInput) => coursesService.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
+      useDataStore.getState().invalidateCourses();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Curso creado correctamente.");
     },
     onError: () => {
@@ -43,6 +47,8 @@ export function useUpdateCourse(id: string) {
       coursesService.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
+      useDataStore.getState().invalidateCourses();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Curso actualizado correctamente.");
     },
     onError: () => {
@@ -57,6 +63,8 @@ export function useDeleteCourse() {
     mutationFn: (id: string) => coursesService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
+      useDataStore.getState().invalidateCourses();
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Curso eliminado.");
     },
     onError: () => {

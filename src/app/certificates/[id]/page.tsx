@@ -60,26 +60,6 @@ export default function CertificateDetailPage() {
 				)}
 			</div>
 
-			<div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm mb-8">
-				{cert.html_content ? (
-					<div
-						className="w-full relative bg-white"
-						style={{ aspectRatio: "1.414/1" }}>
-						<iframe
-							title="Certificado"
-							srcDoc={cert.html_content}
-							className="absolute inset-0 w-full h-full border-0"
-						/>
-					</div>
-				) : (
-					<div className="flex aspect-[1.414/1] w-full items-center justify-center bg-muted/30">
-						<p className="text-sm text-muted-foreground">
-							Vista previa del certificado no disponible.
-						</p>
-					</div>
-				)}
-			</div>
-
 			<div className="grid gap-6 md:grid-cols-3">
 				<div className="rounded-xl border border-border bg-card p-5">
 					<p className="text-sm font-medium text-muted-foreground mb-1">
@@ -89,15 +69,15 @@ export default function CertificateDetailPage() {
 				</div>
 				<div className="rounded-xl border border-border bg-card p-5">
 					<p className="text-sm font-medium text-muted-foreground mb-1">
-						Usuario
+						Alumno
 					</p>
-					<p className="text-sm text-foreground break-all">{cert.user_id}</p>
+					<p className="text-sm text-foreground break-all">{cert.user_full_name ?? cert.user_id}</p>
 				</div>
 				<div className="rounded-xl border border-border bg-card p-5">
 					<p className="text-sm font-medium text-muted-foreground mb-1">
 						Curso
 					</p>
-					<p className="text-sm text-foreground break-all">{cert.course_id}</p>
+					<p className="text-sm text-foreground break-all">{cert.course_title ?? cert.course_id}</p>
 				</div>
 			</div>
 		</div>

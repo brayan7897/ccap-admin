@@ -49,7 +49,15 @@ export default function UsersPage() {
 					setEditingUser(user);
 					setIsModalOpen(true);
 				},
-				(id) => deleteUser.mutate(id),
+				(id) => {
+					if (
+						window.confirm(
+							"¿Eliminar este usuario? Esta acción no se puede deshacer.",
+						)
+					) {
+						deleteUser.mutate(id);
+					}
+				},
 				(user) => setAccessUser(user),
 			),
 		[deleteUser],
@@ -87,12 +95,19 @@ export default function UsersPage() {
 						Gestiona los usuarios registrados en la plataforma.
 					</p>
 				</div>
-				<button
-					onClick={handleOpenCreate}
-					className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-					<UserPlus className="h-4 w-4" />
-					Crear usuario
-				</button>
+				<div className="flex items-center gap-3">
+					<Link
+						href="/users/password-resets"
+						className="inline-flex items-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border border-border">
+						Solicitudes de contraseña
+					</Link>
+					<button
+						onClick={handleOpenCreate}
+						className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+						<UserPlus className="h-4 w-4" />
+						Crear usuario
+					</button>
+				</div>
 			</div>
 
 			{isLoading && (

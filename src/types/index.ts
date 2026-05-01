@@ -162,6 +162,8 @@ export interface Certificate {
   pdf_url: string | null;
   html_content: string | null;
   issued_at: string;
+  user_full_name?: string;
+  course_title?: string;
 }
 
 // ── Drive File ────────────────────────────────────────────────────────────────

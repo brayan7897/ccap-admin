@@ -14,11 +14,11 @@ export function usePermissions() {
   const userPermissions = useMemo(() => new Set(permissions), [permissions]);
 
   const hasPermission = useCallback((code: string) => {
-    return userPermissions.has(code);
+    return userPermissions.has(code.toLowerCase());
   }, [userPermissions]);
 
   const hasAnyPermission = useCallback((...codes: string[]) => {
-    return codes.some(code => userPermissions.has(code));
+    return codes.some(code => userPermissions.has(code.toLowerCase()));
   }, [userPermissions]);
 
   return {

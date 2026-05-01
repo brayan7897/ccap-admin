@@ -31,8 +31,8 @@ export const certificatesService = {
     return res.data;
   },
 
-  async verify(code: string): Promise<Certificate> {
-    const res = await api.get<Certificate>(`/certificates/verify/${code}`);
+  async verify(code: string): Promise<Certificate[]> {
+    const res = await api.get<Certificate[]>(`/certificates/verify/${code}`);
     return res.data;
   },
 

@@ -179,8 +179,8 @@ export function NotificationBell() {
 				type="button"
 				onClick={() => setOpen((v) => !v)}
 				aria-label="Notificaciones"
-				className="relative rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-				<Bell className="h-4 w-4" />
+				className="relative rounded-md p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+				<Bell className="h-5 w-5" />
 				{unreadCount > 0 && (
 					<span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
 						{unreadCount > 99 ? "99+" : unreadCount}
