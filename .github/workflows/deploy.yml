@@ -1,0 +1,70 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: ghcr.io/brayan7897/ccap-admin
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # NEXT_PUBLIC_API_URL se inyecta en build-time porque Next.js
+          # la incrusta en el bundle de JavaScript.
+          # Define esta variable como Repository Secret en:
+          # GitHub → Settings → Secrets and variables → Actions
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to Kubernetes
+        uses: tale/kubectl-action@v1
+        with:
+          base64-kube-config: ${{ secrets.KUBECONFIG_DATA }}
+
+      - name: Update deployment image
+        run: |
+          kubectl set image deployment/ccap-admin \
+            ccap-admin=${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -n brayan-ta
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/ccap-admin -n brayan-ta --timeout=120s
+
+      - name: Diagnose on failure
+        if: failure()
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -n brayan-ta -l app=ccap-admin
+          echo "=== Describe deployment ==="
+          kubectl describe deployment ccap-admin -n brayan-ta
+          echo "=== Pod events ==="
+          kubectl get events -n brayan-ta --sort-by='.lastTimestamp' | tail -20
+          echo "=== Pod logs ==="
+          kubectl logs -l app=ccap-admin -n brayan-ta --tail=50 || true
+          kubectl logs -l app=ccap-admin -n brayan-ta --previous --tail=50 || true
