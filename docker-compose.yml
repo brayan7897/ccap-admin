@@ -1,0 +1,21 @@
+services:
+  ccap-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Baked into the JS bundle at build time
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    image: ccap-admin:latest
+    container_name: ccap-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Runtime-only variables — NOT baked into the bundle
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3001}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET}
+    env_file:
+      # Create this file locally from .env.example — never commit it
+      - .env.local

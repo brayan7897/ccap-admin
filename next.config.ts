@@ -2,6 +2,8 @@ import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Bundles only the files needed at runtime → lean Docker image
+  output: "standalone",
   outputFileTracingRoot: path.join(__dirname),
   async redirects() {
     return [
