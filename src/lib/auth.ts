@@ -1,8 +1,7 @@
 import NextAuth, { type NextAuthConfig, CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { loginSchema } from "@/features/auth/schemas/login.schema";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+import { API_URL } from "@/lib/config";
 
 class AuthError extends CredentialsSignin {
   constructor(public override code: string) {

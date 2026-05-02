@@ -16,10 +16,10 @@ import { useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { getSession } from "next-auth/react";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/config";
 
 const POLL_INTERVAL_MS = 60_000; // check every 60 s
-const BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const BASE_URL = API_URL;
 
 export function SessionGuard({ children }: { children: React.ReactNode }) {
 	const { status } = useSession();
