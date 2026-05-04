@@ -27,7 +27,7 @@ function cleanCoursePayload(data: Partial<CourseInput>): Record<string, unknown>
 
 export const coursesService = {
   async getAll(skip = 0, limit = 50): Promise<Course[]> {
-    const res = await api.get<ApiCourseRecord[]>("/admin/courses/", {
+    const res = await api.get<ApiCourseRecord[]>("/admin/courses", {
       params: { skip, limit },
     });
 
