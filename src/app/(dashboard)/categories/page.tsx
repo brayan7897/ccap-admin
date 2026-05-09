@@ -11,15 +11,26 @@ import {
 import { CategoryModal } from "@/components/shared/CategoryModal";
 import type { CategoryResponse } from "@/features/categories/schemas/category.schema";
 import { toast } from "sonner";
+import { CategoryFilters } from "./_components/CategoryFilters";
+import { CategoryCard } from "./_components/CategoryCard";
+import { CategoryDetailModal } from "./_components/CategoryDetailModal";
 
 export default function CategoriesPage() {
 	const { data, isLoading, isError } = useCategories();
 	const deleteCategory = useDeleteCategory();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [editingCategory, setEditingCategory] = useState<
-		CategoryResponse | undefined
-	>();
+	const [editingCategory, setEditingCategory] = useState<CategoryResponse | undefined>();
+	const [viewingCategory, setViewingCategory] = useState<CategoryResponse | null>(null);
+	const [searchQuery, setSearchQuery] = useState("");
+
+	const filteredData = useMemo(() => {
+		if (!data) return [];
+		const search = searchQuery.toLowerCase();
+		return data.filter((c) => 
+			!search || c.name.toLowerCase().includes(search) || c.slug.toLowerCase().includes(search)
+		);
+	}, [data, searchQuery]);
 
 	const handleEdit = (category: CategoryResponse) => {
 		setEditingCategory(category);
@@ -77,14 +88,39 @@ export default function CategoriesPage() {
 				</div>
 			)}
 
-			{data && (
-				<div className="rounded-xl border border-border bg-card shadow-sm">
-					<DataTable
-						columns={columns}
-						data={data}
-						searchPlaceholder="Buscar por nombre o slug..."
+			{!isLoading && !isError && (
+				<>
+					<CategoryFilters
+						searchQuery={searchQuery}
+						onSearchChange={setSearchQuery}
 					/>
-				</div>
+
+					<div className="hidden md:block rounded-xl border border-border bg-card shadow-sm">
+						<DataTable
+							columns={columns}
+							data={filteredData}
+							searchPlaceholder="Buscar por nombre o slug..."
+							hideSearch
+							onRowClick={setViewingCategory}
+						/>
+					</div>
+
+					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{filteredData.length > 0 ? (
+							filteredData.map((category) => (
+								<CategoryCard
+									key={category.id}
+									category={category}
+									onClick={() => setViewingCategory(category)}
+								/>
+							))
+						) : (
+							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
+								No se encontraron categorías que coincidan con la búsqueda.
+							</div>
+						)}
+					</div>
+				</>
 			)}
 
 			{isModalOpen && (
@@ -94,6 +130,14 @@ export default function CategoriesPage() {
 					category={editingCategory}
 				/>
 			)}
+
+			<CategoryDetailModal
+				category={viewingCategory}
+				isOpen={!!viewingCategory}
+				onClose={() => setViewingCategory(null)}
+				onEdit={handleEdit}
+				onDelete={handleDelete}
+			/>
 		</div>
 	);
 }

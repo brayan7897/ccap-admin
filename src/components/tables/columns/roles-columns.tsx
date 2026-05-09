@@ -62,10 +62,12 @@ export function buildRolesColumns(
 			accessorKey: "is_system_role",
 			header: "Sistema",
 			cell: ({ row }) => (row.original.is_system_role ? "Sí" : "No"),
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "permission_count",
 			header: "Permisos",
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			id: "actions",

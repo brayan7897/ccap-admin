@@ -14,10 +14,23 @@ export const api = axios.create({
   timeout: 15_000,
 });
 
+import type { Session } from "next-auth";
+
+// Promise caché para evitar múltiples peticiones /api/auth/session simultáneas
+let sessionPromise: Promise<Session | null> | null = null;
+
 // ── Request interceptor: inject NextAuth session JWT ─────────────────────────
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   if (typeof window !== "undefined") {
-    const session = await getSession();
+    if (!sessionPromise) {
+      sessionPromise = getSession().finally(() => {
+        // Limpiamos la caché en 1 segundo para que peticiones futuras obtengan datos frescos
+        setTimeout(() => {
+          sessionPromise = null;
+        }, 1000);
+      });
+    }
+    const session = await sessionPromise;
     if (session?.access_token) {
       config.headers.Authorization = `Bearer ${session.access_token}`;
     }
@@ -64,6 +77,5 @@ export async function apiLogout(): Promise<void> {
     await api.post("/auth/logout");
   } catch {
     // Ignore errors — the local NextAuth session will be cleared regardless
-    console.warn("[apiLogout] Backend logout request failed (non-critical).");
   }
 }

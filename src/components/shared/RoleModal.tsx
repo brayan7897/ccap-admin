@@ -60,8 +60,8 @@ export function RoleModal({ isOpen, onClose, role }: RoleModalProps) {
 				await createRole.mutateAsync({ ...data, is_system_role: false });
 			}
 			onClose();
-		} catch (error) {
-			console.error("Error saving role:", error);
+		} catch {
+			// Error is handled by the mutation's onError callback
 		}
 	};
 

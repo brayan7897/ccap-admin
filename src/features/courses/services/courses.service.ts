@@ -7,6 +7,11 @@ type ApiCourseRecord = Course & {
   category_name?: string;
   category_slug?: string;
   instructor_name?: string;
+  // Canonical fields now sent directly by /admin/courses
+  total_modules?: number;
+  total_lessons?: number;
+  enrolled_count?: number;
+  // Legacy aliases kept for backward-compat
   lessons_count?: number;
   lesson_count?: number;
   modules_count?: number;

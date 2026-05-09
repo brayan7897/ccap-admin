@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export function Sidebar() {
-	const { sidebarOpen, toggleSidebar } = useUiStore();
+	const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUiStore();
 	const pathname = usePathname();
 	const { hasPermission, hasAnyPermission } = usePermissions();
 
@@ -101,11 +101,22 @@ export function Sidebar() {
 	];
 
 	return (
-		<aside
-			className={cn(
-				"relative flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
-				sidebarOpen ? "w-60" : "w-16",
-			)}>
+		<>
+			{/* Mobile Overlay */}
+			{sidebarOpen && (
+				<div
+					className="fixed inset-0 z-40 bg-black/50 md:hidden"
+					onClick={() => setSidebarOpen(false)}
+					aria-hidden="true"
+				/>
+			)}
+			<aside
+				className={cn(
+					"absolute md:relative z-50 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
+					sidebarOpen 
+						? "translate-x-0 w-60" 
+						: "-translate-x-full w-60 md:translate-x-0 md:w-16",
+				)}>
 			{/* Brand */}
 			<div
 				className={cn(
@@ -184,5 +195,6 @@ export function Sidebar() {
 				</div>
 			)}
 		</aside>
+		</>
 	);
 }

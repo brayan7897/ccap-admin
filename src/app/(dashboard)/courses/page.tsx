@@ -6,28 +6,50 @@ import {
 	useCourses,
 	useDeleteCourse,
 } from "@/features/courses/hooks/useCourses";
-import { useEnrollments } from "@/features/enrollments/hooks/useEnrollments";
+import { useEnrollmentStats } from "@/features/enrollments/hooks/useEnrollments";
+import { useDataStore } from "@/store/data-store";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { CourseFilters } from "./_components/CourseFilters";
+import { CourseCard } from "./_components/CourseCard";
 
 export default function CoursesPage() {
 	const { data, isLoading, isError } = useCourses();
 	const deleteCourse = useDeleteCourse();
-	// useEnrollments shares React Query cache with the Matrículas panel
-	// (same key ["enrollments", {skip:0, limit:50}]) — no duplicate request.
-	const { data: enrollments } = useEnrollments(0, 50);
 
-	// Build a per-course enrollment count map as fallback when the API
-	// doesn't return enrolled_count directly on each course object.
-	const enrolledCountMap = useMemo<Record<string, number>>(
-		() =>
-			(enrollments ?? []).reduce<Record<string, number>>((acc, e) => {
-				acc[e.course_id] = (acc[e.course_id] ?? 0) + 1;
-				return acc;
-			}, {}),
-		[enrollments],
-	);
+	useEnrollmentStats();
+	const enrolledCountMap = useDataStore((s) => s.enrolledCountMap);
+
+	// Filtros locales
+	const [searchQuery, setSearchQuery] = useState("");
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [typeFilter, setTypeFilter] = useState("all");
+
+	// Filtrado de la data
+	const filteredData = useMemo(() => {
+		if (!data) return [];
+		return data.filter((course) => {
+			// Búsqueda
+			const matchesSearch = course.title
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase());
+			
+			// Estado
+			const matchesStatus =
+				statusFilter === "all" ||
+				(statusFilter === "published" && course.is_published) ||
+				(statusFilter === "draft" && !course.is_published);
+			
+			// Tipo
+			const matchesType =
+				typeFilter === "all" ||
+				(typeFilter === "free" && course.course_type === "FREE") ||
+				(typeFilter === "paid" && course.course_type === "PAID");
+
+			return matchesSearch && matchesStatus && matchesType;
+		});
+	}, [data, searchQuery, statusFilter, typeFilter]);
 
 	const columns = useMemo(
 		() =>
@@ -63,13 +85,48 @@ export default function CoursesPage() {
 				</p>
 			)}
 
-			{/* Table */}
-			{!isLoading && (
-				<DataTable
-					columns={columns}
-					data={data ?? []}
-					searchPlaceholder="Buscar cursos…"
-				/>
+			{!isLoading && !isError && (
+				<>
+					{/* Filtros */}
+					<CourseFilters
+						searchQuery={searchQuery}
+						onSearchChange={setSearchQuery}
+						statusFilter={statusFilter}
+						onStatusChange={setStatusFilter}
+						typeFilter={typeFilter}
+						onTypeChange={setTypeFilter}
+					/>
+
+					{/* Desktop Table (Hidden on small screens) */}
+					<div className="hidden md:block">
+						<DataTable
+							columns={columns}
+							data={filteredData}
+							searchPlaceholder="Buscar en resultados..."
+							hideSearch // Si tu DataTable permite ocultar la búsqueda interna, sino la dejamos
+						/>
+					</div>
+
+					{/* Mobile/Tablet Cards (Hidden on md and larger) */}
+					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{filteredData.length > 0 ? (
+							filteredData.map((course) => (
+								<CourseCard
+									key={course.id}
+									course={course}
+									enrolledCount={
+										course.enrolled_count ?? enrolledCountMap[course.id] ?? 0
+									}
+									onDelete={deleteCourse.mutate}
+								/>
+							))
+						) : (
+							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
+								No se encontraron cursos que coincidan con los filtros.
+							</div>
+						)}
+					</div>
+				</>
 			)}
 		</div>
 	);

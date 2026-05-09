@@ -32,11 +32,14 @@ export default function CourseDetailPage({ params }: Props) {
 
 	const handleSubmit = async (data: CourseInput) => {
 		if (isNew) {
-			await createCourse.mutateAsync(data);
+			const createdCourse = await createCourse.mutateAsync(data);
+			// Redirigir a la vista de edición del curso recién creado
+			// (se podría añadir ?tab=modules en el futuro si se lee de los searchParams)
+			router.push(`/courses/${createdCourse.id}`);
 		} else {
 			await updateCourse.mutateAsync(data);
+			router.push("/courses");
 		}
-		router.push("/courses");
 	};
 
 	if (!isNew && isLoading) {
@@ -49,7 +52,7 @@ export default function CourseDetailPage({ params }: Props) {
 	];
 
 	return (
-		<div className="mx-auto max-w-3xl space-y-6">
+		<div className="mx-auto max-w-6xl space-y-6">
 			<Link
 				href="/courses"
 				className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -85,7 +88,7 @@ export default function CourseDetailPage({ params }: Props) {
 			</div>
 
 			{tab === "info" && (
-				<div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+				<div className="mt-4">
 					<CourseForm
 						defaultValues={
 							course

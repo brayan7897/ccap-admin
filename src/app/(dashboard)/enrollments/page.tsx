@@ -11,7 +11,10 @@ import {
 import { useUsersCatalog, useCoursesCatalog } from "@/hooks/useCatalog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { EnrollmentModal } from "@/components/shared/EnrollmentModal";
-import type { EnrollmentStatus } from "@/types";
+import type { Enrollment, EnrollmentStatus } from "@/types";
+import { EnrollmentFilters } from "./_components/EnrollmentFilters";
+import { EnrollmentCard } from "./_components/EnrollmentCard";
+import { EnrollmentDetailModal } from "./_components/EnrollmentDetailModal";
 
 const STATUS_OPTIONS: { value: EnrollmentStatus | "ALL"; label: string }[] = [
 	{ value: "ALL", label: "Todos los estados" },
@@ -35,6 +38,8 @@ export default function EnrollmentsPage() {
 	const [statusFilter, setStatusFilter] = useState<EnrollmentStatus | "ALL">(
 		"ALL",
 	);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedViewEnrollment, setSelectedViewEnrollment] = useState<Enrollment | null>(null);
 
 	const userMap = useMemo<Record<string, string>>(
 		() =>
@@ -56,9 +61,18 @@ export default function EnrollmentsPage() {
 
 	const filteredData = useMemo(() => {
 		if (!data) return [];
-		if (statusFilter === "ALL") return data;
-		return data.filter((e) => e.status === statusFilter);
-	}, [data, statusFilter]);
+		return data.filter((e) => {
+			const matchesStatus = statusFilter === "ALL" || e.status === statusFilter;
+			
+			const studentName = (e.user_full_name ?? userMap[e.user_id] ?? "").toLowerCase();
+			const courseName = (e.course_title ?? courseMap[e.course_id] ?? "").toLowerCase();
+			const search = searchQuery.toLowerCase();
+			
+			const matchesSearch = !search || studentName.includes(search) || courseName.includes(search);
+			
+			return matchesStatus && matchesSearch;
+		});
+	}, [data, statusFilter, searchQuery, userMap, courseMap]);
 
 	const columns = useMemo(
 		() =>
@@ -71,20 +85,9 @@ export default function EnrollmentsPage() {
 		[cancelEnrollment, userMap, courseMap, canManage],
 	);
 
-	const extraFilters = (
-		<select
-			value={statusFilter}
-			onChange={(e) =>
-				setStatusFilter(e.target.value as EnrollmentStatus | "ALL")
-			}
-			className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-			{STATUS_OPTIONS.map((o) => (
-				<option key={o.value} value={o.value}>
-					{o.label}
-				</option>
-			))}
-		</select>
-	);
+	function handleCancel(id: string) {
+		cancelEnrollment.mutate(id);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -115,18 +118,61 @@ export default function EnrollmentsPage() {
 				</p>
 			)}
 
-			{!isLoading && (
-				<DataTable
-					columns={columns}
-					data={filteredData}
-					searchPlaceholder="Buscar por curso o estudiante…"
-					extraFilters={extraFilters}
-				/>
+			{!isLoading && !isError && (
+				<>
+					{/* Filtros */}
+					<EnrollmentFilters
+						searchQuery={searchQuery}
+						onSearchChange={setSearchQuery}
+						statusFilter={statusFilter}
+						onStatusChange={setStatusFilter}
+					/>
+
+					{/* Desktop Table (Hidden on small screens) */}
+					<div className="hidden md:block">
+						<DataTable
+							columns={columns}
+							data={filteredData}
+							searchPlaceholder="Buscar en resultados..."
+							hideSearch
+							onRowClick={setSelectedViewEnrollment}
+						/>
+					</div>
+
+					{/* Mobile/Tablet Cards (Hidden on md and larger) */}
+					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{filteredData.length > 0 ? (
+							filteredData.map((enrollment) => (
+								<EnrollmentCard
+									key={enrollment.id}
+									enrollment={enrollment}
+									userMap={userMap}
+									courseMap={courseMap}
+									onClick={() => setSelectedViewEnrollment(enrollment)}
+								/>
+							))
+						) : (
+							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
+								No se encontraron matrículas que coincidan con los filtros.
+							</div>
+						)}
+					</div>
+				</>
 			)}
 
 			<EnrollmentModal
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
+			/>
+			
+			<EnrollmentDetailModal
+				enrollment={selectedViewEnrollment}
+				isOpen={!!selectedViewEnrollment}
+				onClose={() => setSelectedViewEnrollment(null)}
+				userMap={userMap}
+				courseMap={courseMap}
+				onCancel={handleCancel}
+				canManage={canManage}
 			/>
 		</div>
 	);

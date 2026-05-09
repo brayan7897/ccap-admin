@@ -17,6 +17,9 @@ import type { Role, Permission } from "@/types";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RoleFilters } from "./_components/RoleFilters";
+import { RoleCard } from "./_components/RoleCard";
+import { RoleDetailModal } from "./_components/RoleDetailModal";
 
 export default function RolesPage() {
 	const {
@@ -46,10 +49,18 @@ export default function RolesPage() {
 		undefined,
 	);
 	const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-	const [selectedPermission, setSelectedPermission] = useState<
-		Permission | null | undefined
-	>(undefined);
+	const [selectedPermission, setSelectedPermission] = useState<Permission | null | undefined>(undefined);
 	const [isPermModalOpen, setIsPermModalOpen] = useState(false);
+
+	// New states for mobile view and filtering
+	const [viewingRole, setViewingRole] = useState<Role | null>(null);
+	const [searchQuery, setSearchQuery] = useState("");
+
+	const filteredRoles = useMemo(() => {
+		if (!rolesData) return [];
+		const search = searchQuery.toLowerCase();
+		return rolesData.filter((r) => !search || r.name.toLowerCase().includes(search));
+	}, [rolesData, searchQuery]);
 
 	const rolesColumns = useMemo(
 		() =>
@@ -61,8 +72,7 @@ export default function RolesPage() {
 				(id) => {
 					const role = rolesData?.find((r) => r.id === id);
 					if (role) {
-						setSelectedRole(role);
-						setIsRoleModalOpen(true);
+						setViewingRole(role);
 					}
 				},
 				(id) => {
@@ -152,11 +162,38 @@ export default function RolesPage() {
 						</p>
 					)}
 					{rolesData && (
-						<DataTable
-							columns={rolesColumns}
-							data={rolesData}
-							searchPlaceholder="Buscar roles…"
-						/>
+						<>
+							<RoleFilters
+								searchQuery={searchQuery}
+								onSearchChange={setSearchQuery}
+							/>
+
+							<div className="hidden md:block">
+								<DataTable
+									columns={rolesColumns}
+									data={filteredRoles}
+									searchPlaceholder="Buscar roles…"
+									hideSearch
+									onRowClick={setViewingRole}
+								/>
+							</div>
+
+							<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+								{filteredRoles.length > 0 ? (
+									filteredRoles.map((role) => (
+										<RoleCard
+											key={role.id}
+											role={role}
+											onClick={() => setViewingRole(role)}
+										/>
+									))
+								) : (
+									<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
+										No se encontraron roles que coincidan con la búsqueda.
+									</div>
+								)}
+							</div>
+						</>
 					)}
 				</div>
 			)}
@@ -219,6 +256,24 @@ export default function RolesPage() {
 					permission={selectedPermission}
 				/>
 			)}
+
+			<RoleDetailModal
+				role={viewingRole}
+				isOpen={!!viewingRole}
+				onClose={() => setViewingRole(null)}
+				onEdit={(id) => {
+					const role = rolesData?.find((r) => r.id === id);
+					if (role) {
+						setSelectedRole(role);
+						setIsRoleModalOpen(true);
+					}
+				}}
+				onDelete={(id) => deleteRole.mutate(id)}
+				onManagePermissions={(id) => {
+					const role = rolesData?.find((r) => r.id === id);
+					if (role) setSelectedRoleForPerms(role);
+				}}
+			/>
 		</div>
 	);
 }

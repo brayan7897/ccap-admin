@@ -20,6 +20,8 @@ interface DataTableProps<TData> {
 	searchPlaceholder?: string;
 	searchColumn?: string;
 	extraFilters?: React.ReactNode;
+	hideSearch?: boolean;
+	onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData>({
@@ -28,6 +30,8 @@ export function DataTable<TData>({
 	searchPlaceholder = "Buscar…",
 	searchColumn,
 	extraFilters,
+	hideSearch = false,
+	onRowClick,
 }: DataTableProps<TData>) {
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [sorting, setSorting] = useState<SortingState>([]);
@@ -50,18 +54,22 @@ export function DataTable<TData>({
 	return (
 		<div className="space-y-4">
 			{/* Search + extra filters */}
-			<div className="flex flex-wrap items-center gap-3">
-				<div className="relative max-w-sm flex-1 min-w-50">
-					<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-					<input
-						value={globalFilter}
-						onChange={(e) => setGlobalFilter(e.target.value)}
-						placeholder={searchPlaceholder}
-						className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-					/>
+			{(!hideSearch || extraFilters) && (
+				<div className="flex flex-wrap items-center gap-3">
+					{!hideSearch && (
+						<div className="relative max-w-sm flex-1 min-w-50">
+							<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+							<input
+								value={globalFilter}
+								onChange={(e) => setGlobalFilter(e.target.value)}
+								placeholder={searchPlaceholder}
+								className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+					)}
+					{extraFilters}
 				</div>
-				{extraFilters}
-			</div>
+			)}
 
 			{/* Table */}
 			<div className="rounded-lg border border-border overflow-hidden">
@@ -84,6 +92,7 @@ export function DataTable<TData>({
 												"px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-secondary dark:text-primary",
 												canSort &&
 													"cursor-pointer select-none hover:text-foreground",
+												(header.column.columnDef.meta as any)?.className
 											)}>
 											{header.isPlaceholder ? null : (
 												<span className="inline-flex items-center gap-1">
@@ -120,12 +129,17 @@ export function DataTable<TData>({
 							table.getRowModel().rows.map((row, i) => (
 								<tr
 									key={row.id}
+									onClick={() => onRowClick?.(row.original)}
 									className={cn(
 										"border-t border-border transition-colors hover:bg-muted/50",
 										i % 2 === 0 ? "bg-background" : "bg-card",
+										onRowClick && "cursor-pointer"
 									)}>
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-3">
+										<td 
+											key={cell.id} 
+											className={cn("px-4 py-3", (cell.column.columnDef.meta as any)?.className)}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext(),

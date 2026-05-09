@@ -11,6 +11,9 @@ import { useUsersCatalog, useCoursesCatalog } from "@/hooks/useCatalog";
 import { CertificateModal } from "@/components/shared/CertificateModal";
 import type { Certificate } from "@/types";
 import { PlusCircle } from "lucide-react";
+import { CertificateFilters } from "./_components/CertificateFilters";
+import { CertificateCard } from "./_components/CertificateCard";
+import { CertificateDetailModal } from "./_components/CertificateDetailModal";
 
 export default function CertificatesPage() {
 	const { data, isLoading, isError } = useCertificates();
@@ -20,6 +23,8 @@ export default function CertificatesPage() {
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingCert, setEditingCert] = useState<Certificate | null>(null);
+	const [viewingCert, setViewingCert] = useState<Certificate | null>(null);
+	const [searchQuery, setSearchQuery] = useState("");
 
 	const userMap = useMemo<Record<string, string>>(
 		() =>
@@ -38,6 +43,17 @@ export default function CertificatesPage() {
 			}, {}),
 		[courses],
 	);
+
+	const filteredData = useMemo(() => {
+		if (!data) return [];
+		const search = searchQuery.toLowerCase();
+		return data.filter((c) => {
+			const studentName = (userMap[c.user_id] ?? c.user_id).toLowerCase();
+			const courseName = (courseMap[c.course_id] ?? c.course_id).toLowerCase();
+			const code = c.certificate_code.toLowerCase();
+			return !search || studentName.includes(search) || courseName.includes(search) || code.includes(search);
+		});
+	}, [data, searchQuery, userMap, courseMap]);
 
 	const columns = useMemo(
 		() =>
@@ -91,18 +107,60 @@ export default function CertificatesPage() {
 				</p>
 			)}
 
-			{!isLoading && (
-				<DataTable
-					columns={columns}
-					data={data ?? []}
-					searchPlaceholder="Buscar certificados…"
-				/>
+			{!isLoading && !isError && (
+				<>
+					<CertificateFilters
+						searchQuery={searchQuery}
+						onSearchChange={setSearchQuery}
+					/>
+
+					<div className="hidden md:block">
+						<DataTable
+							columns={columns}
+							data={filteredData}
+							searchPlaceholder="Buscar certificados…"
+							hideSearch
+							onRowClick={setViewingCert}
+						/>
+					</div>
+
+					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{filteredData.length > 0 ? (
+							filteredData.map((cert) => (
+								<CertificateCard
+									key={cert.id}
+									certificate={cert}
+									userMap={userMap}
+									courseMap={courseMap}
+									onClick={() => setViewingCert(cert)}
+								/>
+							))
+						) : (
+							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
+								No se encontraron certificados que coincidan con la búsqueda.
+							</div>
+						)}
+					</div>
+				</>
 			)}
 
 			<CertificateModal
 				isOpen={isModalOpen}
 				onClose={handleCloseModal}
 				certificate={editingCert}
+			/>
+
+			<CertificateDetailModal
+				certificate={viewingCert}
+				isOpen={!!viewingCert}
+				onClose={() => setViewingCert(null)}
+				userMap={userMap}
+				courseMap={courseMap}
+				onEdit={(cert) => {
+					setEditingCert(cert);
+					setIsModalOpen(true);
+				}}
+				onDelete={(id) => deleteCertificate.mutate(id)}
 			/>
 		</div>
 	);

@@ -25,12 +25,14 @@ export function buildCertificatesColumns(
 		{
 			accessorKey: "certificate_code",
 			header: "Código",
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "issued_at",
 			header: "Emitido",
 			cell: ({ row }) =>
 				new Date(row.original.issued_at).toLocaleDateString("es-PE"),
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			id: "actions",

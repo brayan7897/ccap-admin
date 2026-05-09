@@ -70,6 +70,7 @@ export function buildEnrollmentsColumns(
 					</span>
 				);
 			},
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "status",
@@ -104,6 +105,7 @@ export function buildEnrollmentsColumns(
 					</div>
 				);
 			},
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "enrolled_at",
@@ -122,6 +124,7 @@ export function buildEnrollmentsColumns(
 					</span>
 				);
 			},
+			meta: { className: "hidden xl:table-cell" },
 		},
 	];
 

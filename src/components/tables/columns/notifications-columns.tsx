@@ -52,6 +52,7 @@ export function buildNotificationsColumns(
 					</span>
 				);
 			},
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "title",
@@ -73,6 +74,7 @@ export function buildNotificationsColumns(
 					</span>
 				);
 			},
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "is_global",
@@ -89,6 +91,7 @@ export function buildNotificationsColumns(
 						Dirigida
 					</span>
 				),
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "created_at",
@@ -100,6 +103,7 @@ export function buildNotificationsColumns(
 					month: "short",
 					year: "numeric",
 				}),
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			id: "actions",

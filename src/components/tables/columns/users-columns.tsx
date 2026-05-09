@@ -119,12 +119,14 @@ export function buildUsersColumns(
 			header: "Rol",
 			cell: ({ row }) =>
 				row.original.role?.name ?? row.original.role_name ?? "—",
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "document_type",
 			header: "Doc.",
 			cell: ({ row }) =>
 				`${row.original.document_type} · ${row.original.document_number}`,
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "is_active",
@@ -139,6 +141,7 @@ export function buildUsersColumns(
 					{row.original.is_active ? "Activo" : "Inactivo"}
 				</span>
 			),
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "course_access",
@@ -146,6 +149,7 @@ export function buildUsersColumns(
 			cell: ({ row }) => (
 				<AccessBadge user={row.original} onManageAccess={onManageAccess} />
 			),
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "created_at",
@@ -157,6 +161,7 @@ export function buildUsersColumns(
 					month: "short",
 					year: "numeric",
 				}),
+			meta: { className: "hidden 2xl:table-cell" },
 		},
 		{
 			id: "actions",

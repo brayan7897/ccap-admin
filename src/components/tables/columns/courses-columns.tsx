@@ -6,10 +6,20 @@ import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 const LEVEL_LABELS: Record<string, string> = {
-	BASIC: "Básico",
-	INTERMEDIATE: "Intermedio",
-	ADVANCED: "Avanzado",
+  BASIC: "Básico",
+  INTERMEDIATE: "Intermedio",
+  ADVANCED: "Avanzado",
 };
+
+/** Formatea una fecha ISO a día/mes/año en locale es-PE */
+function formatDate(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 interface ActionsProps {
 	course: Course;
@@ -56,6 +66,7 @@ export function buildCoursesColumns(
 			header: "Categoría",
 			cell: ({ row }) =>
 				row.original.category?.name ?? row.original.category_name ?? "—",
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "instructor_name",
@@ -64,12 +75,14 @@ export function buildCoursesColumns(
 				row.original.instructor_name ??
 				row.original.instructor?.first_name ??
 				"—",
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "course_level",
 			header: "Nivel",
 			cell: ({ row }) =>
 				LEVEL_LABELS[row.original.course_level] ?? row.original.course_level,
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			accessorKey: "is_published",
@@ -107,17 +120,30 @@ export function buildCoursesColumns(
 			header: "Módulos",
 			cell: ({ row }) =>
 				row.original.total_modules ?? row.original.modules?.length ?? "—",
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "total_lessons",
 			header: "Lecciones",
 			cell: ({ row }) => row.original.total_lessons ?? "—",
+			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "enrolled_count",
 			header: "Inscritos",
 			cell: ({ row }) =>
 				row.original.enrolled_count ?? enrolledCountMap[row.original.id] ?? "—",
+			meta: { className: "hidden lg:table-cell" },
+		},
+		{
+			accessorKey: "created_at",
+			header: "Creado",
+			cell: ({ row }) => (
+				<span className="text-xs text-muted-foreground whitespace-nowrap">
+					{formatDate(row.original.created_at)}
+				</span>
+			),
+			meta: { className: "hidden 2xl:table-cell" },
 		},
 		{
 			id: "actions",

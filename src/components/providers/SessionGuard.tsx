@@ -14,7 +14,6 @@
 
 import { useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { getSession } from "next-auth/react";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/config";
 
@@ -22,10 +21,16 @@ const POLL_INTERVAL_MS = 60_000; // check every 60 s
 const BASE_URL = API_URL;
 
 export function SessionGuard({ children }: { children: React.ReactNode }) {
-	const { status } = useSession();
+	const { data: session, status } = useSession();
+	const sessionRef = useRef(session);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const runningRef = useRef(false);
 	const isMountedRef = useRef(true);
+
+	// Mantener la ref del session sincronizada sin desencadenar useEffect del polling
+	useEffect(() => {
+		sessionRef.current = session;
+	}, [session]);
 
 	useEffect(() => {
 		isMountedRef.current = true;
@@ -39,13 +44,13 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
 		runningRef.current = true;
 
 		try {
-			const session = await getSession();
-			if (!session?.access_token) return; // not authenticated — middleware handles redirect
+			const currentSession = sessionRef.current;
+			if (!currentSession?.access_token) return; // not authenticated — middleware handles redirect
 
 			const res = await fetch(`${BASE_URL}/auth/session/verify`, {
 				method: "GET",
 				headers: {
-					Authorization: `Bearer ${session.access_token}`,
+					Authorization: `Bearer ${currentSession.access_token}`,
 					"Content-Type": "application/json",
 				},
 			});

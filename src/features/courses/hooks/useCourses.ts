@@ -31,6 +31,7 @@ export function useCreateCourse() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       useDataStore.getState().invalidateCourses();
+      useDataStore.getState().invalidateEnrollmentStats();
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Curso creado correctamente.");
     },
@@ -48,6 +49,7 @@ export function useUpdateCourse(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       useDataStore.getState().invalidateCourses();
+      useDataStore.getState().invalidateEnrollmentStats();
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Curso actualizado correctamente.");
     },
@@ -64,6 +66,7 @@ export function useDeleteCourse() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       useDataStore.getState().invalidateCourses();
+      useDataStore.getState().invalidateEnrollmentStats();
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Curso eliminado.");
     },

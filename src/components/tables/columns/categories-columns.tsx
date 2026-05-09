@@ -20,6 +20,7 @@ export function buildCategoriesColumns(
 		{
 			accessorKey: "description",
 			header: "Descripción",
+			meta: { className: "hidden lg:table-cell" },
 		},
 		{
 			id: "actions",

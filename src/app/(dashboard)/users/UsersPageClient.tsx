@@ -14,6 +14,9 @@ import {
 import type { CourseAccess, User } from "@/types";
 import { UserModal } from "@/components/shared/UserModal";
 import { AccessModal } from "@/components/shared/AccessModal";
+import { UserFilters } from "./_components/UserFilters";
+import { UserCard } from "./_components/UserCard";
+import { UserDetailModal } from "./_components/UserDetailModal";
 
 const ACCESS_OPTIONS: { value: CourseAccess | "ALL"; label: string }[] = [
 	{ value: "ALL", label: "Todo el acceso" },
@@ -36,11 +39,24 @@ export function UsersPageClient() {
 	);
 	const [accessUser, setAccessUser] = useState<User | null>(null);
 
+	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedViewUser, setSelectedViewUser] = useState<User | null>(null);
+
 	const filteredData = useMemo(() => {
 		if (!data) return [];
-		if (accessFilter === "ALL") return data;
-		return data.filter((u) => u.course_access === accessFilter);
-	}, [data, accessFilter]);
+		return data.filter((u) => {
+			const matchesAccess = accessFilter === "ALL" || u.course_access === accessFilter;
+			const search = searchQuery.toLowerCase();
+			const matchesSearch =
+				!search ||
+				u.first_name.toLowerCase().includes(search) ||
+				u.last_name.toLowerCase().includes(search) ||
+				u.email.toLowerCase().includes(search) ||
+				(u.document_number && u.document_number.includes(search));
+			
+			return matchesAccess && matchesSearch;
+		});
+	}, [data, accessFilter, searchQuery]);
 
 	const columns = useMemo(
 		() =>
@@ -73,18 +89,11 @@ export function UsersPageClient() {
 		setEditingUser(null);
 	}
 
-	const extraFilters = (
-		<select
-			value={accessFilter}
-			onChange={(e) => setAccessFilter(e.target.value as CourseAccess | "ALL")}
-			className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-			{ACCESS_OPTIONS.map((o) => (
-				<option key={o.value} value={o.value}>
-					{o.label}
-				</option>
-			))}
-		</select>
-	);
+	function handleDeleteUser(id: string) {
+		if (window.confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) {
+			deleteUser.mutate(id);
+		}
+	}
 
 	return (
 		<div className="space-y-6">
@@ -119,13 +128,44 @@ export function UsersPageClient() {
 				</p>
 			)}
 
-			{!isLoading && (
-				<DataTable
-					columns={columns}
-					data={filteredData}
-					searchPlaceholder="Buscar usuarios…"
-					extraFilters={extraFilters}
-				/>
+			{!isLoading && !isError && (
+				<>
+					{/* Filtros */}
+					<UserFilters
+						searchQuery={searchQuery}
+						onSearchChange={setSearchQuery}
+						accessFilter={accessFilter}
+						onAccessChange={setAccessFilter}
+					/>
+
+					{/* Desktop Table (Hidden on small screens) */}
+					<div className="hidden md:block">
+						<DataTable
+							columns={columns}
+							data={filteredData}
+							searchPlaceholder="Buscar en resultados..."
+							hideSearch
+							onRowClick={setSelectedViewUser}
+						/>
+					</div>
+
+					{/* Mobile/Tablet Cards (Hidden on md and larger) */}
+					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{filteredData.length > 0 ? (
+							filteredData.map((user) => (
+								<UserCard
+									key={user.id}
+									user={user}
+									onClick={() => setSelectedViewUser(user)}
+								/>
+							))
+						) : (
+							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
+								No se encontraron usuarios que coincidan con los filtros.
+							</div>
+						)}
+					</div>
+				</>
 			)}
 			<UserModal
 				isOpen={isModalOpen}
@@ -140,6 +180,17 @@ export function UsersPageClient() {
 					updateAccess.mutate({ userId, status })
 				}
 				isLoading={updateAccess.isPending}
+			/>
+			<UserDetailModal
+				user={selectedViewUser}
+				isOpen={!!selectedViewUser}
+				onClose={() => setSelectedViewUser(null)}
+				onEdit={(user) => {
+					setEditingUser(user);
+					setIsModalOpen(true);
+				}}
+				onDelete={handleDeleteUser}
+				onManageAccess={setAccessUser}
 			/>
 		</div>
 	);
