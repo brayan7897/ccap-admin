@@ -34,6 +34,7 @@ export function CategoryForm({
 		register,
 		handleSubmit,
 		setValue,
+		watch,
 		formState: { errors },
 	} = useForm<CategoryInput>({
 		resolver: zodResolver(categorySchema),
@@ -41,8 +42,11 @@ export function CategoryForm({
 			name: initialData?.name || "",
 			slug: initialData?.slug || "",
 			description: initialData?.description || "",
+			image_url: initialData?.image_url || "",
 		},
 	});
+
+	const imageUrl = watch("image_url");
 
 	// Auto-generate slug from name if not edit
 	useEffect(() => {
@@ -118,6 +122,35 @@ export function CategoryForm({
 					<p className="text-xs text-destructive">
 						{errors.description.message}
 					</p>
+				)}
+			</div>
+
+			<div className="space-y-2">
+				<label htmlFor="image_url" className="text-sm font-medium">
+					URL de la Imagen (Opcional)
+				</label>
+				<input
+					id="image_url"
+					{...register("image_url")}
+					className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="https://ejemplo.com/imagen.jpg"
+				/>
+				{errors.image_url && (
+					<p className="text-xs text-destructive">{errors.image_url.message}</p>
+				)}
+				{imageUrl && !errors.image_url && (
+					<div className="mt-2 relative h-40 w-full overflow-hidden rounded-md border">
+						{/* eslint-disable-next-line @next/next/no-img-element */}
+						<img
+							src={imageUrl}
+							alt="Preview"
+							className="h-full w-full object-cover"
+							onError={(e) => {
+								(e.target as HTMLImageElement).src =
+									"https://via.placeholder.com/400x200?text=URL+Inválida";
+							}}
+						/>
+					</div>
 				)}
 			</div>
 

@@ -2,6 +2,7 @@
 
 import { X, Shield, Check, Ban } from "lucide-react";
 import type { CourseAccess, User } from "@/types";
+import { Portal } from "./Portal";
 
 const ACCESS_BADGE: Record<CourseAccess, { label: string; className: string }> =
 	{
@@ -56,9 +57,10 @@ export function AccessModal({
 		.trim() || "U";
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-			onClick={onClose}>
+		<Portal>
+			<div
+				className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+				onClick={onClose}>
 			<div
 				className="w-full max-w-sm rounded-2xl border border-border bg-background shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden"
 				onClick={(e) => e.stopPropagation()}>
@@ -139,7 +141,8 @@ export function AccessModal({
 						</button>
 					</div>
 				</div>
+				</div>
 			</div>
-		</div>
+		</Portal>
 	);
 }

@@ -153,11 +153,12 @@ export function UsersPageClient() {
 					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
 						{filteredData.length > 0 ? (
 							filteredData.map((user) => (
-								<UserCard
-									key={user.id}
-									user={user}
-									onClick={() => setSelectedViewUser(user)}
-								/>
+									<UserCard
+										key={user.id}
+										user={user}
+										onClick={() => setSelectedViewUser(user)}
+										onManageAccess={setAccessUser}
+									/>
 							))
 						) : (
 							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">

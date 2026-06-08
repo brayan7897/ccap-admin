@@ -20,8 +20,8 @@ export const metadata: Metadata = {
 	title: "CCAP Admin | Panel de Administración",
 	description: "Panel administrativo de CCAP GLOBAL S.R.L.",
 	icons: {
-		icon: "/favicon.svg",
-		shortcut: "/favicon.svg",
+		icon: "/icon.svg",
+		shortcut: "/icon.svg",
 	},
 };
 

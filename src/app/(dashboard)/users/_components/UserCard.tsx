@@ -26,9 +26,10 @@ const ACCESS_BADGE: Record<CourseAccess, { label: string; className: string }> =
 interface UserCardProps {
 	user: User;
 	onClick: () => void;
+	onManageAccess: (user: User) => void;
 }
 
-export function UserCard({ user, onClick }: UserCardProps) {
+export function UserCard({ user, onClick, onManageAccess }: UserCardProps) {
 	const access = (user.course_access ?? "NONE").toUpperCase() as CourseAccess;
 	const badge = ACCESS_BADGE[access] ?? ACCESS_BADGE.NONE;
 	const Icon =
@@ -81,10 +82,16 @@ export function UserCard({ user, onClick }: UserCardProps) {
 					
 					<div className="flex items-center gap-2 mt-1">
 						<span className="font-medium text-foreground">Acceso:</span>
-						<span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold", badge.className)}>
+						<button 
+							onClick={(e) => {
+								e.stopPropagation();
+								e.preventDefault();
+								onManageAccess(user);
+							}}
+							className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold hover:opacity-80 transition-opacity", badge.className)}>
 							<Icon className="h-3 w-3" />
 							{badge.label}
-						</span>
+						</button>
 					</div>
 				</div>
 			</div>

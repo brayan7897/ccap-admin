@@ -8,6 +8,7 @@ import {
 	useUpdatePermission,
 } from "@/features/roles/hooks/useRoles";
 import type { PermissionInput } from "@/features/roles/schemas/role.schema";
+import { Portal } from "@/components/shared/Portal";
 
 interface PermissionModalProps {
 	isOpen: boolean;
@@ -36,11 +37,12 @@ export function PermissionModal({ isOpen, onClose, permission }: PermissionModal
 	}
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) onClose();
-			}}>
+		<Portal>
+			<div
+				className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+				onClick={(e) => {
+					if (e.target === e.currentTarget) onClose();
+				}}>
 			<div className="relative w-full max-w-md rounded-xl border border-border bg-background shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
 				<div className="flex items-center justify-between border-b border-border px-6 py-4">
 					<h2 className="text-base font-semibold text-foreground">
@@ -62,6 +64,7 @@ export function PermissionModal({ isOpen, onClose, permission }: PermissionModal
 					/>
 				</div>
 			</div>
-		</div>
+			</div>
+		</Portal>
 	);
 }

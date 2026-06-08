@@ -52,7 +52,11 @@ function AccessBadge({
 	return (
 		<button
 			type="button"
-			onClick={() => onManageAccess(user)}
+			onClick={(e) => {
+				e.stopPropagation();
+				e.preventDefault();
+				onManageAccess(user);
+			}}
 			title="Gestionar acceso a cursos"
 			className={`group inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] ${
 				access === "NONE"
@@ -81,11 +85,19 @@ function Actions({ user, onEdit, onDelete }: ActionsProps) {
 			<button
 				className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
 				title="Editar"
-				onClick={() => onEdit(user)}>
+				onClick={(e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					onEdit(user);
+				}}>
 				<Pencil className="h-4 w-4" />
 			</button>
 			<button
-				onClick={() => onDelete(user.id)}
+				onClick={(e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					onDelete(user.id);
+				}}
 				className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
 				title="Eliminar">
 				<Trash2 className="h-4 w-4" />

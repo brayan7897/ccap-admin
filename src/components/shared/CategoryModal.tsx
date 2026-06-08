@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { CategoryForm } from "../forms/CategoryForm";
 import { type CategoryResponse } from "@/features/categories/schemas/category.schema";
+import { Portal } from "@/components/shared/Portal";
 
 interface CategoryModalProps {
 	isOpen: boolean;
@@ -18,7 +19,10 @@ export function CategoryModal({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+		<Portal>
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => {
+				if (e.target === e.currentTarget) onClose();
+			}}>
 			<div className="w-full max-w-lg rounded-xl bg-background shadow-lg border">
 				<div className="flex items-center justify-between border-b p-4">
 					<h3 className="text-lg font-semibold">
@@ -38,6 +42,7 @@ export function CategoryModal({
 					/>
 				</div>
 			</div>
-		</div>
+			</div>
+		</Portal>
 	);
 }

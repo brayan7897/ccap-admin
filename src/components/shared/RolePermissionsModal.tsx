@@ -10,6 +10,7 @@ import {
 	useRevokePermission,
 } from "@/features/roles/hooks/useRoles";
 import { cn } from "@/lib/utils";
+import { Portal } from "@/components/shared/Portal";
 
 interface RolePermissionsModalProps {
 	isOpen: boolean;
@@ -56,11 +57,12 @@ export function RolePermissionsModal({
 	if (!isOpen || !role) return null;
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) onClose();
-			}}>
+		<Portal>
+			<div
+				className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+				onClick={(e) => {
+					if (e.target === e.currentTarget) onClose();
+				}}>
 			<div className="relative w-full max-w-2xl rounded-xl border border-border bg-background shadow-xl mx-4 max-h-[90vh] flex flex-col">
 				<div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
 					<div>
@@ -132,6 +134,7 @@ export function RolePermissionsModal({
 					)}
 				</div>
 			</div>
-		</div>
+			</div>
+		</Portal>
 	);
 }

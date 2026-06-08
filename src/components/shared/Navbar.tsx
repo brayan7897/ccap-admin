@@ -25,9 +25,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NotificationBell } from "./NotificationBell";
 import { apiLogout } from "@/lib/api";
-import Image from "next/image";
-import logoClaro from "@/assets/logo/logo-tema-claro.png";
-import logoOscuro from "@/assets/logo/logo-tema-oscuro.png";
+import { Logo } from "@/components/ui/Logo";
 
 const PAGE_TITLES: Record<string, string> = {
 	"/": "Dashboard",
@@ -156,21 +154,7 @@ export function Navbar() {
 
 					{/* Logo */}
 					<div className="flex shrink-0 items-center">
-						{darkMode ? (
-							<Image
-								src={logoOscuro}
-								alt="CCAP Admin Logo"
-								height={32}
-								className="h-8 w-auto object-contain"
-							/>
-						) : (
-							<Image
-								src={logoClaro}
-								alt="CCAP Admin Logo"
-								height={32}
-								className="h-8 w-auto object-contain"
-							/>
-						)}
+						<Logo className="h-6 sm:h-8" variant={darkMode ? "light" : "default"} />
 					</div>
 
 					{/* Separator */}

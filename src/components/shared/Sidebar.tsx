@@ -74,6 +74,29 @@ export function Sidebar() {
 			],
 		},
 		{
+			label: "Sitio Web",
+			items: [
+				{
+					label: "Info. Empresa",
+					href: "/site/company-info",
+					icon: BookOpen,
+					permissions: ["admin:access"],
+				},
+				{
+					label: "Profesores",
+					href: "/site/featured-professors",
+					icon: Award,
+					permissions: ["admin:access"],
+				},
+				{
+					label: "Testimonios",
+					href: "/site/testimonials",
+					icon: Users,
+					permissions: ["admin:access"],
+				},
+			],
+		},
+		{
 			label: "Actividad",
 			items: [
 				{

@@ -12,6 +12,7 @@ import type {
 	CertificateCreateInput,
 	CertificateEditInput,
 } from "@/features/certificates/schemas/certificate.schema";
+import { Portal } from "@/components/shared/Portal";
 
 interface CertificateModalProps {
 	isOpen: boolean;
@@ -65,11 +66,12 @@ export function CertificateModal({
 	}
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) handleClose();
-			}}>
+		<Portal>
+			<div
+				className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+				onClick={(e) => {
+					if (e.target === e.currentTarget) handleClose();
+				}}>
 			<div className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -95,6 +97,7 @@ export function CertificateModal({
 					/>
 				</div>
 			</div>
-		</div>
+			</div>
+		</Portal>
 	);
 }

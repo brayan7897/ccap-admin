@@ -67,7 +67,7 @@ export function LoginForm() {
 	};
 
 	return (
-		<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+		<form onSubmit={handleSubmit(onSubmit)} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
 			{/* Banner: student blocked */}
 			{studentBlocked && (
 				<div className="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
@@ -126,7 +126,10 @@ export function LoginForm() {
 				type="submit"
 				disabled={loading}
 				className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
-				{loading ? "Iniciando sesión…" : "Iniciar sesión"}
+				<div className="flex items-center space-x-2">
+					{loading && <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />}
+					<span>{loading ? "Iniciando sesión…" : "Iniciar sesión"}</span>
+				</div>
 			</button>
 		</form>
 	);

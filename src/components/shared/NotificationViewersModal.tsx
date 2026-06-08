@@ -2,6 +2,7 @@
 
 import { X, Globe, User, Eye, Book, Trash2, Users } from "lucide-react";
 import { useViewers } from "@/features/notifications/hooks/useNotifications";
+import { Portal } from "@/components/shared/Portal";
 
 interface Props {
 	notificationId: string | null;
@@ -14,7 +15,10 @@ export function NotificationViewersModal({ notificationId, onClose }: Props) {
 	if (!notificationId) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+		<Portal>
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => {
+					if (e.target === e.currentTarget) onClose();
+				}}>
 			<div className="w-full max-w-lg rounded-xl border border-border bg-background shadow-2xl">
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -191,7 +195,8 @@ export function NotificationViewersModal({ notificationId, onClose }: Props) {
 					</button>
 				</div>
 			</div>
-		</div>
+			</div>
+		</Portal>
 	);
 }
 

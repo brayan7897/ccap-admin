@@ -3,6 +3,7 @@
 import type { CourseAccess, User } from "@/types";
 import { X, Pencil, Trash2, Shield, Calendar, Mail, Phone, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Portal } from "@/components/shared/Portal";
 
 interface UserDetailModalProps {
 	user: User | null;
@@ -33,12 +34,13 @@ export function UserDetailModal({
 	const access = (user.course_access ?? "NONE").toUpperCase();
 
 	return (
-		<div
-			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-0"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) onClose();
-			}}
-		>
+		<Portal>
+			<div
+				className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-0"
+				onClick={(e) => {
+					if (e.target === e.currentTarget) onClose();
+				}}
+			>
 			<div className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-border px-6 py-4 bg-muted/30 shrink-0">
@@ -180,7 +182,8 @@ export function UserDetailModal({
 						Eliminar
 					</button>
 				</div>
+				</div>
 			</div>
-		</div>
+		</Portal>
 	);
 }

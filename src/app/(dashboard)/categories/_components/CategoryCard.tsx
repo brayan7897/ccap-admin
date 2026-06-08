@@ -14,6 +14,20 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
 			onClick={onClick}
 			className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md cursor-pointer active:scale-[0.98]"
 		>
+			{category.image_url && (
+				<div className="h-32 w-full overflow-hidden bg-muted">
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src={category.image_url}
+						alt={category.name}
+						className="h-full w-full object-cover transition-transform hover:scale-105"
+						onError={(e) => {
+							(e.target as HTMLImageElement).src =
+								"https://via.placeholder.com/400x200?text=Error";
+						}}
+					/>
+				</div>
+			)}
 			<div className="p-4 flex-1">
 				<div className="flex items-center gap-2 mb-2">
 					<Folder className="h-4 w-4 text-primary" />

@@ -21,6 +21,7 @@ import {
   useUpdateUserDocument,
 } from "@/features/users/hooks/useUsers";
 import { useRoles } from "@/features/roles/hooks/useRoles";
+import { Portal } from "./Portal";
 
 // ── Shared field style ────────────────────────────────────────────────────────
 const FIELD =
@@ -542,11 +543,12 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}>
+    <Portal>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}>
       <div className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -594,6 +596,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           {isEditing && activeTab === "access" && <EditAccessTab user={user} />}
         </div>
       </div>
-    </div>
+      </div>
+    </Portal>
   );
 }

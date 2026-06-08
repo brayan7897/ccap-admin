@@ -2,6 +2,7 @@
 
 import type { CategoryResponse } from "@/features/categories/schemas/category.schema";
 import { X, Pencil, Trash2, Folder } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 
 interface CategoryDetailModalProps {
 	category: CategoryResponse | null;
@@ -21,12 +22,13 @@ export function CategoryDetailModal({
 	if (!isOpen || !category) return null;
 
 	return (
-		<div
-			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-0"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) onClose();
-			}}
-		>
+		<Portal>
+			<div
+				className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-0"
+				onClick={(e) => {
+					if (e.target === e.currentTarget) onClose();
+				}}
+			>
 			<div className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-border px-6 py-4 bg-muted/30 shrink-0">
@@ -51,6 +53,23 @@ export function CategoryDetailModal({
 
 				{/* Body */}
 				<div className="px-6 py-5 overflow-y-auto space-y-6">
+					{category.image_url && (
+						<div>
+							<h3 className="text-sm font-medium text-foreground mb-2">Imagen</h3>
+							<div className="relative h-48 w-full overflow-hidden rounded-md border bg-muted">
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img
+									src={category.image_url}
+									alt={`Imagen de ${category.name}`}
+									className="h-full w-full object-cover"
+									onError={(e) => {
+										(e.target as HTMLImageElement).src =
+											"https://via.placeholder.com/400x200?text=Imagen+No+Disponible";
+									}}
+								/>
+							</div>
+						</div>
+					)}
 					<div>
 						<h3 className="text-sm font-medium text-foreground mb-2">Descripción</h3>
 						{category.description ? (
@@ -89,6 +108,7 @@ export function CategoryDetailModal({
 					</button>
 				</div>
 			</div>
-		</div>
+			</div>
+		</Portal>
 	);
 }
