@@ -22,7 +22,7 @@ export function useUsersCatalog() {
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["catalog", "users"],
-    queryFn: () => usersService.getAll(0, 1000),
+    queryFn: () => usersService.getAll(0, 50),
     enabled: !usersLoaded,
     staleTime: Infinity,
   });
@@ -48,7 +48,7 @@ export function useCoursesCatalog() {
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["catalog", "courses"],
-    queryFn: () => coursesService.getAll(0, 1000),
+    queryFn: () => coursesService.getAll(0, 50),
     enabled: !coursesLoaded,
     staleTime: Infinity,
   });
