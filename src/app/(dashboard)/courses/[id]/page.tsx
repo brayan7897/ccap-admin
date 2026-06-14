@@ -37,10 +37,14 @@ export default function CourseDetailPage({ params }: Props) {
 	const handleSubmit = async (data: CourseInput) => {
 		if (isNew) {
 			const createdCourse = await createCourse.mutateAsync(data);
-			// POST /courses/ no admite is_published — si el usuario marcó el curso
-			// como público en la creación, se aplica con un PUT inmediato.
-			if (data.is_published) {
-				await coursesService.update(createdCourse.id, { is_published: true });
+			// POST /courses/ no admite is_published ni thumbnail_url — si el usuario
+			// los definió en la creación, se aplican con un PUT inmediato.
+			const postCreateUpdate: Partial<CourseInput> = {};
+			if (data.is_published) postCreateUpdate.is_published = true;
+			if (data.thumbnail_url) postCreateUpdate.thumbnail_url = data.thumbnail_url;
+
+			if (Object.keys(postCreateUpdate).length > 0) {
+				await coursesService.update(createdCourse.id, postCreateUpdate);
 				qc.invalidateQueries({ queryKey: ["courses"] });
 				useDataStore.getState().invalidateCourses();
 			}
