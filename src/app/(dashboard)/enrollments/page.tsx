@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { DataTable } from "@/components/tables/DataTable";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import { buildEnrollmentsColumns } from "@/components/tables/columns/enrollments-columns";
 import {
 	useEnrollments,
@@ -110,7 +111,9 @@ export default function EnrollmentsPage() {
 			</div>
 
 			{isLoading && (
-				<p className="text-sm text-muted-foreground">Cargando matrículas…</p>
+				<div className="rounded-xl border border-border bg-card p-4">
+					<TableSkeleton rows={6} columns={5} />
+				</div>
 			)}
 			{isError && (
 				<p className="text-sm text-destructive">

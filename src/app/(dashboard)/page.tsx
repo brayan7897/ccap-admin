@@ -7,7 +7,6 @@ import {
 	Users,
 	Activity,
 	PlayCircle,
-	Loader2,
 	UserCheck,
 	Clock,
 	Award,
@@ -19,6 +18,12 @@ import {
 	useDashboardStats,
 	useDashboardCharts,
 } from "@/features/dashboard/hooks/useDashboard";
+import {
+	Skeleton,
+	KpiCardSkeleton,
+	ChartSkeleton,
+	ListSkeleton,
+} from "@/components/ui/skeleton";
 import type {
 	MonthlyEnrollment,
 	TopCourse,
@@ -479,19 +484,11 @@ export default function DashboardPage() {
 				</div>
 			)}
 
-			{/* Loading */}
-			{isLoading && (
-				<div className="flex items-center gap-2 text-sm text-muted-foreground">
-					<Loader2 className="h-4 w-4 animate-spin" />
-					Cargando métricas…
-				</div>
-			)}
-
 			{/* KPI Grid — 3 col on md, 6 on xl */}
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-				{kpiCards.map((card) => (
-					<KpiCard key={card.label} {...card} />
-				))}
+				{isLoading
+					? Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} />)
+					: kpiCards.map((card) => <KpiCard key={card.label} {...card} />)}
 			</div>
 
 			{/* Row 1: Bar chart + Donut */}
@@ -502,10 +499,7 @@ export default function DashboardPage() {
 					icon={BarChart3}
 					className="lg:col-span-2">
 					{chartsLoading ? (
-						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-							Cargando…
-						</div>
+						<ChartSkeleton />
 					) : monthlyBarData.length === 0 ? (
 						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
 							Sin datos de matrículas
@@ -530,9 +524,8 @@ export default function DashboardPage() {
 				{/* Enrollment status donut */}
 				<Card title="Estado de matrículas" icon={PieChart}>
 					{chartsLoading ? (
-						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-							Cargando…
+						<div className="flex items-center justify-center pt-2">
+							<Skeleton className="h-32.5 w-32.5 rounded-full" />
 						</div>
 					) : donutData.length === 0 ? (
 						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
@@ -554,10 +547,7 @@ export default function DashboardPage() {
 					icon={Star}
 					className="lg:col-span-1">
 					{chartsLoading ? (
-						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-							Cargando…
-						</div>
+						<ListSkeleton rows={5} />
 					) : (
 						<TopCoursesTable courses={charts?.top_courses ?? []} />
 					)}
@@ -566,10 +556,7 @@ export default function DashboardPage() {
 				{/* Categorías */}
 				<Card title="Matrículas por categoría" icon={Award}>
 					{chartsLoading ? (
-						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-							Cargando…
-						</div>
+						<ListSkeleton rows={4} />
 					) : (charts?.categories ?? []).length === 0 ? (
 						<p className="text-xs text-muted-foreground text-center py-8">
 							Sin categorías
@@ -592,10 +579,7 @@ export default function DashboardPage() {
 				{/* Distribución por nivel */}
 				<Card title="Cursos por nivel" icon={UserCheck}>
 					{chartsLoading ? (
-						<div className="flex items-center justify-center h-36 text-muted-foreground text-sm">
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-							Cargando…
-						</div>
+						<ListSkeleton rows={3} />
 					) : (charts?.level_distribution ?? []).length === 0 ? (
 						<p className="text-xs text-muted-foreground text-center py-8">
 							Sin datos

@@ -6,6 +6,7 @@ import {
 	Bell,
 	BookOpen,
 	ChevronLeft,
+	FileBarChart,
 	GraduationCap,
 	Inbox,
 	LayoutDashboard,
@@ -119,6 +120,17 @@ export function Sidebar() {
 					exact: true,
 				},
 				{ label: "Mi bandeja", href: "/notifications/inbox", icon: Inbox },
+			],
+		},
+		{
+			label: "Reportes",
+			items: [
+				{
+					label: "Reportes",
+					href: "/reports",
+					icon: FileBarChart,
+					permissions: ["admin:access"],
+				},
 			],
 		},
 	];

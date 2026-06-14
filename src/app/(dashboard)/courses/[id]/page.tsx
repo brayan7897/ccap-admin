@@ -6,12 +6,15 @@ import {
 	useCreateCourse,
 	useUpdateCourse,
 } from "@/features/courses/hooks/useCourses";
+import { coursesService } from "@/features/courses/services/courses.service";
+import { useDataStore } from "@/store/data-store";
 import type { CourseInput } from "@/features/courses/schemas/course.schema";
 import { ModulesTab } from "./_module-editor";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 type Tab = "info" | "modules";
@@ -29,10 +32,18 @@ export default function CourseDetailPage({ params }: Props) {
 	const { data: course, isLoading } = useCourse(isNew ? "" : id);
 	const createCourse = useCreateCourse();
 	const updateCourse = useUpdateCourse(id);
+	const qc = useQueryClient();
 
 	const handleSubmit = async (data: CourseInput) => {
 		if (isNew) {
 			const createdCourse = await createCourse.mutateAsync(data);
+			// POST /courses/ no admite is_published — si el usuario marcó el curso
+			// como público en la creación, se aplica con un PUT inmediato.
+			if (data.is_published) {
+				await coursesService.update(createdCourse.id, { is_published: true });
+				qc.invalidateQueries({ queryKey: ["courses"] });
+				useDataStore.getState().invalidateCourses();
+			}
 			// Redirigir a la vista de edición del curso recién creado
 			// (se podría añadir ?tab=modules en el futuro si se lee de los searchParams)
 			router.push(`/courses/${createdCourse.id}`);

@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import { buildCoursesColumns } from "@/components/tables/columns/courses-columns";
 import {
 	useCourses,
@@ -77,7 +78,9 @@ export default function CoursesPage() {
 
 			{/* States */}
 			{isLoading && (
-				<p className="text-sm text-muted-foreground">Cargando cursos…</p>
+				<div className="rounded-xl border border-border bg-card p-4">
+					<TableSkeleton rows={6} columns={5} />
+				</div>
 			)}
 			{isError && (
 				<p className="text-sm text-destructive">

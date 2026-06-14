@@ -261,3 +261,54 @@ export interface ApiError {
   detail: string;
   status_code?: number;
 }
+
+// ── Admin Reports ─────────────────────────────────────────────────────────────
+export interface EnrollmentReportItem {
+  course_id: string;
+  course_title: string;
+  month: string | null;
+  enrollments: number;
+  completions: number;
+}
+
+export interface StudentProgressReportItem {
+  enrollment_id: string;
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  course_id: string;
+  course_title: string;
+  status: EnrollmentStatus;
+  progress_percentage: number;
+  total_lessons: number;
+  completed_lessons: number;
+  enrolled_at: string;
+}
+
+export interface CertificateReportItem {
+  certificate_id: string;
+  certificate_code: string;
+  student_name: string;
+  student_email: string;
+  course_id: string;
+  course_title: string;
+  issued_at: string;
+  pdf_url: string | null;
+}
+
+export interface UserRegistrationReportItem {
+  month: string | null;
+  role_name: string;
+  is_active: boolean;
+  total: number;
+}
+
+export interface ActivityReportItem {
+  user_id: string;
+  full_name: string;
+  email: string;
+  role_name: string;
+  is_active: boolean;
+  last_login_at: string | null;
+  total_sessions: number;
+}
