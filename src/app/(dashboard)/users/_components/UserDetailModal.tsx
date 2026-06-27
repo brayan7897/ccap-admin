@@ -1,7 +1,7 @@
 "use client";
 
 import type { CourseAccess, User } from "@/types";
-import { X, Pencil, Trash2, Shield, Calendar, Mail, Phone, CreditCard } from "lucide-react";
+import { X, Pencil, Trash2, Shield, Calendar, Mail, Phone, CreditCard, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Portal } from "@/components/shared/Portal";
 
@@ -12,6 +12,7 @@ interface UserDetailModalProps {
 	onEdit: (user: User) => void;
 	onDelete: (id: string) => void;
 	onManageAccess: (user: User) => void;
+	onResetPassword: (user: User) => void;
 }
 
 const ACCESS_LABEL: Record<string, string> = {
@@ -28,6 +29,7 @@ export function UserDetailModal({
 	onEdit,
 	onDelete,
 	onManageAccess,
+	onResetPassword,
 }: UserDetailModalProps) {
 	if (!isOpen || !user) return null;
 
@@ -160,6 +162,16 @@ export function UserDetailModal({
 					>
 						<Shield className="h-4 w-4" />
 						Gestionar acceso
+					</button>
+					<button
+						onClick={() => {
+							onClose();
+							onResetPassword(user);
+						}}
+						className="inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
+					>
+						<KeyRound className="h-4 w-4" />
+						Contraseña
 					</button>
 					<button
 						onClick={() => {

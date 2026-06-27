@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, User as UserIcon, FileText, ShieldCheck, Lock, Unlock } from "lucide-react";
+import { X, User as UserIcon, FileText, ShieldCheck, Lock, Unlock, KeyRound } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "@/types";
@@ -38,6 +38,7 @@ interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: User | null;
+  onResetPassword?: (user: User) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -450,7 +451,7 @@ function EditDocumentTab({ user, onClose }: { user: User; onClose: () => void })
 
 // ─────────────────────────────────────────────────────────────────────────────
 /** EDIT — Access tab: quick activate/deactivate & course access status */
-function EditAccessTab({ user }: { user: User }) {
+function EditAccessTab({ user, onClose, onResetPassword }: { user: User; onClose: () => void; onResetPassword?: (user: User) => void }) {
   const activateUser = useActivateUser();
 
   const accessLabel: Record<string, string> = {
@@ -521,6 +522,31 @@ function EditAccessTab({ user }: { user: User }) {
           </button>
         </div>
       </div>
+
+      {/* Password Reset */}
+      {onResetPassword && (
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Contraseña</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Forzar el cambio de contraseña del usuario.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onResetPassword(user);
+              }}
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Cambiar contraseña
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -529,7 +555,7 @@ function EditAccessTab({ user }: { user: User }) {
 // Main UserModal
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function UserModal({ isOpen, onClose, user }: UserModalProps) {
+export function UserModal({ isOpen, onClose, user, onResetPassword }: UserModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
   if (!isOpen) return null;
@@ -593,7 +619,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           {isEditing && activeTab === "document" && (
             <EditDocumentTab user={user} onClose={onClose} />
           )}
-          {isEditing && activeTab === "access" && <EditAccessTab user={user} />}
+          {isEditing && activeTab === "access" && <EditAccessTab user={user} onClose={onClose} onResetPassword={onResetPassword} />}
         </div>
       </div>
       </div>

@@ -17,6 +17,7 @@ import { AccessModal } from "@/components/shared/AccessModal";
 import { UserFilters } from "./_components/UserFilters";
 import { UserCard } from "./_components/UserCard";
 import { UserDetailModal } from "./_components/UserDetailModal";
+import { ResetPasswordModal } from "./_components/ResetPasswordModal";
 
 const ACCESS_OPTIONS: { value: CourseAccess | "ALL"; label: string }[] = [
 	{ value: "ALL", label: "Todo el acceso" },
@@ -41,6 +42,7 @@ export function UsersPageClient() {
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedViewUser, setSelectedViewUser] = useState<User | null>(null);
+	const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
 
 	const filteredData = useMemo(() => {
 		if (!data) return [];
@@ -172,6 +174,7 @@ export function UsersPageClient() {
 				isOpen={isModalOpen}
 				onClose={handleCloseModal}
 				user={editingUser}
+				onResetPassword={setResetPasswordUser}
 			/>
 			<AccessModal
 				user={accessUser}
@@ -192,6 +195,12 @@ export function UsersPageClient() {
 				}}
 				onDelete={handleDeleteUser}
 				onManageAccess={setAccessUser}
+				onResetPassword={setResetPasswordUser}
+			/>
+			<ResetPasswordModal
+				user={resetPasswordUser}
+				isOpen={!!resetPasswordUser}
+				onClose={() => setResetPasswordUser(null)}
 			/>
 		</div>
 	);
