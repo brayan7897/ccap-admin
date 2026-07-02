@@ -43,7 +43,7 @@ export const coursesService = {
     if (sort_by) params.sort_by = sort_by;
     if (sort_order) params.sort_order = sort_order;
 
-    const res = await api.get<ApiCourseRecord[]>("/admin/v1/courses", {
+    const res = await api.get<ApiCourseRecord[]>("/admin/courses", {
       params,
     });
 

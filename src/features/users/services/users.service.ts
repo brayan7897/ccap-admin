@@ -23,7 +23,7 @@ export const usersService = {
     if (sort_by) params.sort_by = sort_by;
     if (sort_order) params.sort_order = sort_order;
     
-    const res = await api.get<User[]>("/admin/v1/users", { params });
+    const res = await api.get<User[]>("/admin/users", { params });
     return res.data;
   },
 
@@ -39,8 +39,8 @@ export const usersService = {
     if (q) params.q = q;
     if (sort_by) params.sort_by = sort_by;
     if (sort_order) params.sort_order = sort_order;
-    
-    const res = await api.get<User[]>("/admin/v1/users/pending", { params });
+
+    const res = await api.get<User[]>("/admin/users/pending", { params });
     return res.data;
   },
 
@@ -52,12 +52,12 @@ export const usersService = {
     sort_by?: string,
     sort_order?: "asc" | "desc"
   ): Promise<User[]> {
-    const params: Record<string, any> = { skip, limit };
+    const params: Record<string, any> = { skip, limit, course_access: "PENDING" };
     if (q) params.q = q;
     if (sort_by) params.sort_by = sort_by;
     if (sort_order) params.sort_order = sort_order;
     
-    const res = await api.get<User[]>("/v1/users/pending-access", { params });
+    const res = await api.get<User[]>("/admin/users", { params });
     return res.data;
   },
 
