@@ -10,7 +10,7 @@ import {
 	type FeaturedProfessorInput,
 } from "@/features/site/schemas/site.schema";
 import { useAddFeaturedProfessor } from "@/features/site/hooks/useSite";
-import { useUsersCatalog } from "@/hooks/useCatalog";
+import { useInstructorsCatalog } from "@/hooks/useCatalog";
 import { Portal } from "@/components/shared/Portal";
 
 interface AddProfessorModalProps {
@@ -20,7 +20,7 @@ interface AddProfessorModalProps {
 
 export function AddProfessorModal({ isOpen, onClose }: AddProfessorModalProps) {
 	const addProfessor = useAddFeaturedProfessor();
-	const { users } = useUsersCatalog();
+	const { users, isLoading: instructorsLoading } = useInstructorsCatalog();
 
 	const {
 		register,
@@ -46,21 +46,10 @@ export function AddProfessorModal({ isOpen, onClose }: AddProfessorModalProps) {
 	const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	// Filter only instructors / professors by role
-	const instructors = useMemo(() => {
-		return users?.filter(
-			(u) =>
-				u.role_name?.toLowerCase().includes("instructor") ||
-				u.role_name?.toLowerCase().includes("profesor") ||
-				u.role?.name?.toLowerCase().includes("instructor") ||
-				u.role?.name?.toLowerCase().includes("profesor")
-		) || [];
-	}, [users]);
-
 	const filteredUsers = useMemo(() => {
 		const q = userSearch.toLowerCase().trim();
-		if (!q) return instructors.slice(0, 50);
-		return instructors
+		if (!q) return users.slice(0, 50);
+		return users
 			.filter(
 				(u) =>
 					u.full_name?.toLowerCase().includes(q) ||
@@ -70,7 +59,7 @@ export function AddProfessorModal({ isOpen, onClose }: AddProfessorModalProps) {
 					u.email?.toLowerCase().includes(q)
 			)
 			.slice(0, 50);
-	}, [userSearch, instructors]);
+	}, [userSearch, users]);
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -138,7 +127,7 @@ export function AddProfessorModal({ isOpen, onClose }: AddProfessorModalProps) {
 										</span>
 									</span>
 								) : (
-									"Buscar instructor por DNI o Nombre..."
+									instructorsLoading ? "Cargando instructores…" : "Buscar instructor por DNI o Nombre..."
 								)}
 								<ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
 							</button>
@@ -160,7 +149,9 @@ export function AddProfessorModal({ isOpen, onClose }: AddProfessorModalProps) {
 									<div className="max-h-60 overflow-y-auto overscroll-contain p-1.5 scrollbar-thin">
 										{filteredUsers.length === 0 ? (
 											<div className="p-3 text-center text-sm text-muted-foreground">
-												{instructors.length === 0
+												{instructorsLoading
+													? "Cargando instructores…"
+													: users.length === 0
 													? "No hay usuarios con rol de Instructor registrados"
 													: "No se encontraron instructores"}
 											</div>

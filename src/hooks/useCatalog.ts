@@ -7,9 +7,11 @@
  *
  * Invalidation is handled by the mutation hooks using qc.invalidateQueries.
  */
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usersService } from "@/features/users/services/users.service";
 import { coursesService } from "@/features/courses/services/courses.service";
+import { rolesService } from "@/features/roles/services/roles.service";
 
 // ── Users catalog ─────────────────────────────────────────────────────────────
 
@@ -38,5 +40,37 @@ export function useCoursesCatalog() {
   return {
     courses: data ?? [],
     isLoading,
+  };
+}
+
+// ── Instructors catalog (server-side role filter) ─────────────────────────────
+
+export function useInstructorsCatalog() {
+  const { data: roles } = useQuery({
+    queryKey: ["catalog", "roles"],
+    queryFn: () => rolesService.getAll(),
+    staleTime: Infinity,
+  });
+
+  const instructorRoleId = useMemo(
+    () =>
+      roles?.find(
+        (r) =>
+          r.name?.toLowerCase().includes("instructor") ||
+          r.name?.toLowerCase().includes("profesor")
+      )?.id,
+    [roles]
+  );
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["catalog", "users", "instructors", instructorRoleId],
+    queryFn: () => usersService.getAll(0, 50, undefined, undefined, undefined, undefined, instructorRoleId),
+    enabled: !!instructorRoleId,
+    staleTime: Infinity,
+  });
+
+  return {
+    users: data ?? [],
+    isLoading: isLoading || !instructorRoleId,
   };
 }

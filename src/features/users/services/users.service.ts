@@ -15,14 +15,16 @@ export const usersService = {
     is_active?: boolean,
     q?: string,
     sort_by?: string,
-    sort_order?: "asc" | "desc"
+    sort_order?: "asc" | "desc",
+    role_id?: string
   ): Promise<User[]> {
     const params: Record<string, any> = { skip, limit };
     if (is_active !== undefined) params.is_active = is_active;
     if (q) params.q = q;
     if (sort_by) params.sort_by = sort_by;
     if (sort_order) params.sort_order = sort_order;
-    
+    if (role_id) params.role_id = role_id;
+
     const res = await api.get<User[]>("/admin/users", { params });
     return res.data;
   },
