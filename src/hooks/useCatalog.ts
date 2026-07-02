@@ -16,7 +16,7 @@ import { coursesService } from "@/features/courses/services/courses.service";
 export function useUsersCatalog() {
   const { data, isLoading } = useQuery({
     queryKey: ["catalog", "users"],
-    queryFn: () => usersService.getAll(0, 1000), // Increased to 1000 to cover all typical names for lookup maps
+    queryFn: () => usersService.getAll(0, 50),
     staleTime: Infinity,
   });
 
@@ -31,7 +31,7 @@ export function useUsersCatalog() {
 export function useCoursesCatalog() {
   const { data, isLoading } = useQuery({
     queryKey: ["catalog", "courses"],
-    queryFn: () => coursesService.getAll(0, 1000), // Increased to 1000 to cover all typical names for lookup maps
+    queryFn: () => coursesService.getAll(0, 50),
     staleTime: Infinity,
   });
 
