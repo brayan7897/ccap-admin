@@ -17,6 +17,7 @@ export function useRoles() {
   return useQuery({
     queryKey: ROLES_KEY,
     queryFn: () => rolesService.getAll(),
+    staleTime: 5 * 60 * 1000, // 5 min — roles are very stable
   });
 }
 
@@ -25,6 +26,7 @@ export function useRole(id: string) {
     queryKey: [...ROLES_KEY, id],
     queryFn: () => rolesService.getById(id),
     enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 min
   });
 }
 
@@ -70,6 +72,7 @@ export function usePermissions() {
   return useQuery({
     queryKey: PERMS_KEY,
     queryFn: () => rolesService.getAllPermissions(),
+    staleTime: 10 * 60 * 1000, // 10 min — permissions are extremely stable
   });
 }
 

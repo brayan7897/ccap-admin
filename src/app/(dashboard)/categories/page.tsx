@@ -26,7 +26,7 @@ export default function CategoriesPage() {
 
 	const filteredData = useMemo(() => {
 		if (!data) return [];
-		const search = searchQuery.toLowerCase();
+		const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
 		return data.filter((c) => 
 			!search || c.name.toLowerCase().includes(search) || c.slug.toLowerCase().includes(search)
 		);

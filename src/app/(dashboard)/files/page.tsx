@@ -1,13 +1,18 @@
 "use client";
 
-import { filesService } from "@/features/files/services/files.service";
+import {
+	useFiles,
+	useDeleteFile,
+	useUploadFile,
+} from "@/features/files/hooks/useFiles";
 import type { DriveFile } from "@/types";
-import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, FileText, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 function FilesGrid({ files }: { files: DriveFile[] }) {
+	const deleteFile = useDeleteFile();
+
 	if (files.length === 0) {
 		return (
 			<p className="text-sm text-muted-foreground">
@@ -45,15 +50,11 @@ function FilesGrid({ files }: { files: DriveFile[] }) {
 							</a>
 						)}
 						<button
-							onClick={() =>
-								filesService
-									.delete(f.id)
-									.then(() => toast.success("Archivo eliminado."))
-									.catch(() => toast.error("Error al eliminar el archivo."))
-							}
-							className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+							onClick={() => deleteFile.mutate(f.id)}
+							disabled={deleteFile.isPending}
+							className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50">
 							<Trash2 className="h-3.5 w-3.5" />
-							Eliminar
+							{deleteFile.isPending ? "Eliminando..." : "Eliminar"}
 						</button>
 					</div>
 				</div>
@@ -69,10 +70,8 @@ interface UploadState {
 }
 
 export default function FilesPage() {
-	const { data, isLoading, isError, refetch } = useQuery({
-		queryKey: ["files"],
-		queryFn: filesService.getAll,
-	});
+	const { data, isLoading, isError } = useFiles();
+	const uploadFile = useUploadFile();
 
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [uploadState, setUploadState] = useState<UploadState>({
@@ -81,29 +80,26 @@ export default function FilesPage() {
 		fileName: "",
 	});
 
-	const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
 		setUploadState({ uploading: true, progress: 0, fileName: file.name });
 
-		try {
-			await filesService.upload(file, undefined, (percent) => {
-				setUploadState((prev) => ({ ...prev, progress: percent }));
-			});
-			// El XHR marca 100% cuando los bytes llegaron al servidor;
-			// éste aún puede estar procesando. Mantenemos la barra en 100
-			// un instante para que se vea completa antes de cerrar.
-			setUploadState((prev) => ({ ...prev, progress: 100 }));
-			await new Promise((r) => setTimeout(r, 700));
-			toast.success(`"${file.name}" subido correctamente.`);
-			refetch();
-		} catch {
-			toast.error("Error al subir el archivo.");
-		} finally {
-			setUploadState({ uploading: false, progress: 0, fileName: "" });
-			if (inputRef.current) inputRef.current.value = "";
-		}
+		uploadFile.mutate(
+			{
+				file,
+				onProgress: (percent) => {
+					setUploadState((prev) => ({ ...prev, progress: percent }));
+				},
+			},
+			{
+				onSettled: () => {
+					setUploadState({ uploading: false, progress: 0, fileName: "" });
+					if (inputRef.current) inputRef.current.value = "";
+				},
+			},
+		);
 	};
 
 	return (

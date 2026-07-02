@@ -13,6 +13,7 @@ export function useEnrollments(skip = 0, limit = 50) {
   return useQuery({
     queryKey: [...QUERY_KEY, { skip, limit }],
     queryFn: () => enrollmentsService.getAll(skip, limit),
+    staleTime: 3 * 60 * 1000, // 3 min — enrollment lists don't change every second
   });
 }
 
@@ -21,6 +22,7 @@ export function useMyEnrollments() {
   return useQuery({
     queryKey: [...QUERY_KEY, "me"],
     queryFn: () => enrollmentsService.getMyEnrollments(),
+    staleTime: 2 * 60 * 1000, // 2 min
   });
 }
 
@@ -31,7 +33,7 @@ export function useMyEnrollments() {
  * y comparte el resultado entre todos los paneles que lo consuman.
  */
 export function useEnrollmentStats() {
-  const { enrollmentStatsLoaded, setEnrolledCountMap } = useDataStore();
+  const { enrollmentStatsLoaded, setEnrollmentsData } = useDataStore();
 
   const query = useQuery({
     queryKey: [...QUERY_KEY, "stats"],
@@ -47,8 +49,8 @@ export function useEnrollmentStats() {
       acc[e.course_id] = (acc[e.course_id] ?? 0) + 1;
       return acc;
     }, {});
-    setEnrolledCountMap(map);
-  }, [query.data, setEnrolledCountMap]);
+    setEnrollmentsData(query.data, map);
+  }, [query.data, setEnrollmentsData]);
 
   return query;
 }
@@ -57,9 +59,11 @@ export function useEnroll() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (course_id: string) => enrollmentsService.enroll(course_id),
-    onSuccess: () => {
+    onSuccess: (_, course_id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
-      useDataStore.getState().invalidateEnrollmentStats();
+      // Optimistic update: increment the count for this course in-memory.
+      // This avoids discarding and re-fetching 1,000 enrollment records.
+      useDataStore.getState().incrementEnrolledCount(course_id);
       toast.success("Inscripción realizada.");
     },
     onError: () => toast.error("Error al inscribirse en el curso."),
@@ -70,9 +74,11 @@ export function useCancelEnrollment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => enrollmentsService.cancel(id),
-    onSuccess: () => {
+    onSuccess: (cancelledEnrollment) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
-      useDataStore.getState().invalidateEnrollmentStats();
+      // Optimistic update: decrement count for this course in-memory.
+      // Avoids discarding the entire 1,000-record enrollment stats cache.
+      useDataStore.getState().decrementEnrolledCount(cancelledEnrollment.course_id);
       toast.success("Inscripción cancelada.");
     },
     onError: () => toast.error("Error al cancelar la inscripción."),
@@ -89,9 +95,10 @@ export function useAdminEnroll() {
       user_id: string;
       course_id: string;
     }) => enrollmentsService.adminEnroll(user_id, course_id),
-    onSuccess: () => {
+    onSuccess: (_, { course_id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
-      useDataStore.getState().invalidateEnrollmentStats();
+      // Optimistic update: no full stats re-fetch needed.
+      useDataStore.getState().incrementEnrolledCount(course_id);
       toast.success("Usuario matriculado correctamente.");
     },
     onError: (err: any) => {

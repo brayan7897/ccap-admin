@@ -67,7 +67,7 @@ export default function EnrollmentsPage() {
 			
 			const studentName = (e.user_full_name ?? userMap[e.user_id] ?? "").toLowerCase();
 			const courseName = (e.course_title ?? courseMap[e.course_id] ?? "").toLowerCase();
-			const search = searchQuery.toLowerCase();
+			const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
 			
 			const matchesSearch = !search || studentName.includes(search) || courseName.includes(search);
 			

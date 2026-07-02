@@ -250,23 +250,23 @@ function KpiCard({
 	badge?: string;
 }) {
 	return (
-		<div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-			<div className={`rounded-xl p-3.5 shrink-0 ${bg}`}>
+		<div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-accent/20">
+			<div className={`rounded-lg p-3 shrink-0 ${bg}`}>
 				<Icon className={`h-5 w-5 ${color}`} />
 			</div>
-			<div className="flex flex-col gap-0.5 min-w-0">
+			<div className="flex flex-col min-w-0 gap-0.5">
 				<p className="text-xs font-medium text-muted-foreground truncate">
 					{label}
 				</p>
-				<p className="text-2xl font-bold text-foreground">{value}</p>
+				<p className="text-2xl font-semibold text-foreground tracking-tight">{value}</p>
 				{subtext && (
-					<p className="text-[10px] text-muted-foreground/80 truncate">
+					<p className="text-[11px] text-muted-foreground truncate">
 						{subtext}
 					</p>
 				)}
 			</div>
 			{badge && (
-				<span className="ml-auto shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+				<span className="ml-auto shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
 					{badge}
 				</span>
 			)}
@@ -289,7 +289,7 @@ function Card({
 	return (
 		<div
 			className={`rounded-xl border border-border bg-card shadow-sm ${className}`}>
-			<div className="flex items-center gap-2 border-b border-border px-5 py-3.5">
+			<div className="flex items-center gap-2 border-b border-border bg-muted/30 px-5 py-4 rounded-t-xl">
 				<Icon className="h-4 w-4 text-primary" />
 				<h3 className="text-sm font-semibold text-foreground">{title}</h3>
 			</div>
@@ -372,8 +372,8 @@ export default function DashboardPage() {
 				? `${stats.users.total} totales · ${stats.users.inactive} inactivos`
 				: "",
 			icon: Users,
-			color: "text-primary",
-			bg: "bg-primary/10",
+			color: "text-blue-600 dark:text-blue-400",
+			bg: "bg-blue-50 dark:bg-blue-900/20",
 			badge: stats?.users.pending_course_access
 				? `${stats.users.pending_course_access} pendientes`
 				: undefined,
@@ -385,8 +385,8 @@ export default function DashboardPage() {
 				? `${stats.courses.total} totales · ${stats.courses.draft} borradores`
 				: "",
 			icon: BookOpen,
-			color: "text-secondary",
-			bg: "bg-secondary/10",
+			color: "text-indigo-600 dark:text-indigo-400",
+			bg: "bg-indigo-50 dark:bg-indigo-900/20",
 		},
 		{
 			label: "Total Matrículas",
@@ -395,8 +395,8 @@ export default function DashboardPage() {
 				? `${stats.enrollments.active} activas · ${stats.enrollments.completed} completadas`
 				: "",
 			icon: GraduationCap,
-			color: "text-amber-500",
-			bg: "bg-amber-100 dark:bg-amber-900/20",
+			color: "text-amber-600 dark:text-amber-400",
+			bg: "bg-amber-50 dark:bg-amber-900/20",
 		},
 		{
 			label: "Progreso Promedio",
@@ -407,8 +407,8 @@ export default function DashboardPage() {
 				? `${stats.lessons.completed_events} lecciones completadas`
 				: "",
 			icon: TrendingUp,
-			color: "text-green-600",
-			bg: "bg-green-100 dark:bg-green-900/20",
+			color: "text-emerald-600 dark:text-emerald-400",
+			bg: "bg-emerald-50 dark:bg-emerald-900/20",
 		},
 		{
 			label: "Inscripciones Activas",
@@ -417,16 +417,16 @@ export default function DashboardPage() {
 				? `${stats.enrollments.cancelled} canceladas`
 				: "",
 			icon: Activity,
-			color: "text-blue-500",
-			bg: "bg-blue-100 dark:bg-blue-900/20",
+			color: "text-cyan-600 dark:text-cyan-400",
+			bg: "bg-cyan-50 dark:bg-cyan-900/20",
 		},
 		{
 			label: "Lecciones Vistas",
 			value: stats ? String(stats.lessons.completed_events) : "—",
 			subtext: "eventos completados",
 			icon: PlayCircle,
-			color: "text-violet-500",
-			bg: "bg-violet-100 dark:bg-violet-900/20",
+			color: "text-fuchsia-600 dark:text-fuchsia-400",
+			bg: "bg-fuchsia-50 dark:bg-fuchsia-900/20",
 		},
 	];
 

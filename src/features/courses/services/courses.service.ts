@@ -31,9 +31,20 @@ function cleanCoursePayload(data: Partial<CourseInput>): Record<string, unknown>
 }
 
 export const coursesService = {
-  async getAll(skip = 0, limit = 50): Promise<Course[]> {
-    const res = await api.get<ApiCourseRecord[]>("/admin/courses", {
-      params: { skip, limit },
+  async getAll(
+    skip = 0,
+    limit = 50,
+    q?: string,
+    sort_by?: string,
+    sort_order?: "asc" | "desc"
+  ): Promise<Course[]> {
+    const params: Record<string, any> = { skip, limit };
+    if (q) params.q = q;
+    if (sort_by) params.sort_by = sort_by;
+    if (sort_order) params.sort_order = sort_order;
+
+    const res = await api.get<ApiCourseRecord[]>("/admin/v1/courses", {
+      params,
     });
 
     // Normalizar la respuesta para que coincida con el tipo `Course` usado en la UI

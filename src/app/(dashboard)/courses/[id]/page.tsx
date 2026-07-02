@@ -46,7 +46,6 @@ export default function CourseDetailPage({ params }: Props) {
 			if (Object.keys(postCreateUpdate).length > 0) {
 				await coursesService.update(createdCourse.id, postCreateUpdate);
 				qc.invalidateQueries({ queryKey: ["courses"] });
-				useDataStore.getState().invalidateCourses();
 			}
 			// Redirigir a la vista de edición del curso recién creado
 			// (se podría añadir ?tab=modules en el futuro si se lee de los searchParams)

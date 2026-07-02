@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { useAdminEnroll } from "@/features/enrollments/hooks/useEnrollments";
 import { useUsersCatalog, useCoursesCatalog } from "@/hooks/useCatalog";
 import { Portal } from "@/components/shared/Portal";
+import { UserCombobox } from "@/components/shared/UserCombobox";
+import { CourseCombobox } from "@/components/shared/CourseCombobox";
 
 interface EnrollmentModalProps {
 	isOpen: boolean;
@@ -66,42 +68,25 @@ export function EnrollmentModal({ isOpen, onClose }: EnrollmentModalProps) {
 						<label className="text-sm font-medium text-foreground">
 							Usuario
 						</label>
-						<select
+						<UserCombobox
+							users={users}
 							value={userId}
-							onChange={(e) => setUserId(e.target.value)}
-							required
+							onChange={setUserId}
 							disabled={usersLoading}
-							className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-							<option value="">
-								{usersLoading ? "Cargando usuarios…" : "Seleccionar usuario"}
-							</option>
-							{users.map((u) => (
-								<option key={u.id} value={u.id}>
-									{u.full_name || `${u.first_name} ${u.last_name}`.trim()} —{" "}
-									{u.email}
-								</option>
-							))}
-						</select>
+							placeholder={usersLoading ? "Cargando usuarios…" : "Buscar usuario por DNI o Nombre..."}
+						/>
 					</div>
 
 					{/* Course select */}
 					<div className="space-y-1.5">
 						<label className="text-sm font-medium text-foreground">Curso</label>
-						<select
+						<CourseCombobox
+							courses={publishedCourses}
 							value={courseId}
-							onChange={(e) => setCourseId(e.target.value)}
-							required
+							onChange={setCourseId}
 							disabled={coursesLoading}
-							className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-							<option value="">
-								{coursesLoading ? "Cargando cursos…" : "Seleccionar curso"}
-							</option>
-							{publishedCourses.map((c) => (
-								<option key={c.id} value={c.id}>
-									{c.title} {c.course_type === "PAID" ? "(Pago)" : "(Gratis)"}
-								</option>
-							))}
-						</select>
+							placeholder={coursesLoading ? "Cargando cursos…" : "Buscar curso..."}
+						/>
 						<p className="text-xs text-muted-foreground">
 							Solo cursos publicados. Para cursos de pago se requiere esta
 							acción de administrador.

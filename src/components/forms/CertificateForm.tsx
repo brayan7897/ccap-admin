@@ -10,7 +10,12 @@ import {
 	type CertificateEditInput,
 } from "@/features/certificates/schemas/certificate.schema";
 import type { Certificate, User, Course } from "@/types";
-import { Link as LinkIcon, Code, Search, ChevronDown, Check } from "lucide-react";
+import { Link as LinkIcon, Code } from "lucide-react";
+import { UserCombobox } from "@/components/shared/UserCombobox";
+import { CourseCombobox } from "@/components/shared/CourseCombobox";
+import { useDataStore } from "@/store/data-store";
+import { useEnrollmentStats } from "@/features/enrollments/hooks/useEnrollments";
+import { toast } from "sonner";
 
 interface CertificateFormProps {
 	mode: "create" | "edit";
@@ -54,122 +59,52 @@ export function CertificateForm({
 						drive_file_id: "",
 						pdf_url: "",
 						html_content: "",
+						issued_at: "",
 					},
 	});
 
 	const field =
 		"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:border-muted-foreground/30";
 
-	// Custom searchable combobox for user selection
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const selectedUserId = watch("user_id" as any);
-	const selectedUser = users.find((u) => u.id === selectedUserId);
-	
-	const [userSearch, setUserSearch] = useState("");
-	const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	const filteredUsers = useMemo(() => {
-		const q = userSearch.toLowerCase().trim();
-		if (!q) return users.slice(0, 50); // Show max 50 initially
-		return users
-			.filter(
-				(u) =>
-					u.full_name?.toLowerCase().includes(q) ||
-					u.first_name?.toLowerCase().includes(q) ||
-					u.last_name?.toLowerCase().includes(q) ||
-					u.document_number?.toLowerCase().includes(q) ||
-					u.email?.toLowerCase().includes(q)
-			)
-			.slice(0, 50);
-	}, [userSearch, users]);
+	const { enrollments } = useDataStore();
+	useEnrollmentStats();
 
-	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-				setIsUserDropdownOpen(false);
+	const handleFormSubmit = (data: CertificateCreateInput | CertificateEditInput) => {
+		if (mode === "create") {
+			const createData = data as CertificateCreateInput;
+			const isEnrolled = enrollments.some(
+				(e) =>
+					e.user_id === createData.user_id &&
+					e.course_id === createData.course_id &&
+					e.status !== "CANCELLED"
+			);
+
+			if (!isEnrolled) {
+				toast.error("El estudiante no está matriculado en este curso.");
+				return;
 			}
 		}
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
+		onSubmit(data);
+	};
 
 	return (
 		<form
-			onSubmit={handleSubmit((data) => onSubmit(data))}
+			onSubmit={handleSubmit(handleFormSubmit)}
 			className="space-y-5">
 			
 			{mode === "create" && (
 				<div className="space-y-4 rounded-xl border border-border bg-muted/10 p-5">
-					<div className="space-y-1.5" ref={dropdownRef}>
+					<div className="space-y-1.5">
 						<label className="text-sm font-medium">Estudiante *</label>
-						<div className="relative">
-							<button
-								type="button"
-								onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-								className={`${field} justify-between items-center text-left ${!selectedUser ? "text-muted-foreground" : ""}`}
-							>
-								{selectedUser ? (
-									<span className="truncate">
-										<span className="font-semibold text-foreground mr-1.5">{selectedUser.document_number}</span>
-										{selectedUser.full_name || `${selectedUser.first_name} ${selectedUser.last_name}`.trim()}
-									</span>
-								) : (
-									"Buscar estudiante por DNI o Nombre..."
-								)}
-								<ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-							</button>
-
-							{isUserDropdownOpen && (
-								<div className="absolute top-full z-50 mt-1.5 w-full rounded-lg border border-border bg-popover shadow-xl animate-in fade-in zoom-in-95">
-									<div className="flex items-center border-b border-border px-3 py-2">
-										<Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-										<input
-											type="text"
-											className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground h-8"
-											placeholder="Escribe DNI o Nombre..."
-											value={userSearch}
-											onChange={(e) => setUserSearch(e.target.value)}
-											onClick={(e) => e.stopPropagation()}
-											autoFocus
-										/>
-									</div>
-									<div className="max-h-60 overflow-y-auto p-1.5 scrollbar-thin">
-										{filteredUsers.length === 0 ? (
-											<div className="p-3 text-center text-sm text-muted-foreground">
-												No se encontraron estudiantes
-											</div>
-										) : (
-											filteredUsers.map((u) => (
-												<button
-													key={u.id}
-													type="button"
-													onClick={() => {
-														// eslint-disable-next-line @typescript-eslint/no-explicit-any
-														setValue("user_id" as any, u.id, { shouldValidate: true });
-														setIsUserDropdownOpen(false);
-														setUserSearch("");
-													}}
-													className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm text-left transition-colors hover:bg-accent hover:text-accent-foreground ${
-														selectedUserId === u.id ? "bg-primary/10 text-primary font-medium" : ""
-													}`}
-												>
-													<div className="flex flex-col truncate pr-2">
-														<span className="truncate font-medium text-foreground">
-															{u.full_name || `${u.first_name} ${u.last_name}`.trim()}
-														</span>
-														<span className="text-xs text-muted-foreground truncate mt-0.5">
-															DNI: {u.document_number} · {u.email}
-														</span>
-													</div>
-													{selectedUserId === u.id && <Check className="h-4 w-4 shrink-0" />}
-												</button>
-											))
-										)}
-									</div>
-								</div>
-							)}
-						</div>
+						<UserCombobox
+							users={users}
+							value={selectedUserId || ""}
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							onChange={(val) => setValue("user_id" as any, val, { shouldValidate: true })}
+						/>
 						{"user_id" in errors && errors.user_id && (
 							<p className="text-xs text-destructive mt-1">
 								{(errors.user_id as { message?: string }).message}
@@ -179,20 +114,37 @@ export function CertificateForm({
 
 					<div className="space-y-1.5">
 						<label className="text-sm font-medium">Curso *</label>
-						{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-						<select {...register("course_id" as any)} className={field}>
-							<option value="">Seleccionar curso…</option>
-							{courses.map((c) => (
-								<option key={c.id} value={c.id}>
-									{c.title}
-								</option>
-							))}
-						</select>
+						<CourseCombobox
+							courses={courses}
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							value={watch("course_id" as any) || ""}
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							onChange={(val) => setValue("course_id" as any, val, { shouldValidate: true })}
+						/>
 						{"course_id" in errors && errors.course_id && (
 							<p className="text-xs text-destructive mt-1">
 								{(errors.course_id as { message?: string }).message}
 							</p>
 						)}
+					</div>
+
+					<div className="space-y-1.5">
+						<label className="text-sm font-medium">
+							Fecha de Emisión <span className="text-muted-foreground font-normal ml-1">(Opcional)</span>
+						</label>
+						<input
+							{...register("issued_at" as any)}
+							type="datetime-local"
+							className={field}
+						/>
+						{"issued_at" in errors && errors.issued_at && (
+							<p className="text-xs text-destructive mt-1">
+								{(errors.issued_at as { message?: string }).message}
+							</p>
+						)}
+						<p className="text-xs text-muted-foreground mt-1.5">
+							Si no especificas una fecha, se usará el momento actual. Puedes elegir una fecha pasada si el certificado fue emitido antes.
+						</p>
 					</div>
 				</div>
 			)}

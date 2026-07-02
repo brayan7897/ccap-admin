@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { User } from "@/types";
 import type {
@@ -15,10 +15,19 @@ import { useDataStore } from "@/store/data-store";
 const QUERY_KEY = ["users"] as const;
 const CATALOG_KEY = ["catalog", "users"] as const;
 
-export function useUsers(skip = 0, limit = 50, is_active?: boolean) {
+export function useUsers(
+  skip = 0,
+  limit = 50,
+  is_active?: boolean,
+  q?: string,
+  sort_by?: string,
+  sort_order?: "asc" | "desc"
+) {
   return useQuery({
-    queryKey: [...QUERY_KEY, { skip, limit, is_active }],
-    queryFn: () => usersService.getAll(skip, limit, is_active),
+    queryKey: [...QUERY_KEY, { skip, limit, is_active, q, sort_by, sort_order }],
+    queryFn: () => usersService.getAll(skip, limit, is_active, q, sort_by, sort_order),
+    staleTime: 3 * 60 * 1000, // 3 min — admin user lists change infrequently
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -26,6 +35,7 @@ export function usePendingUsers() {
   return useQuery({
     queryKey: [...QUERY_KEY, "pending"],
     queryFn: () => usersService.getPending(),
+    staleTime: 2 * 60 * 1000, // 2 min — pending users need timely but not instant updates
   });
 }
 
@@ -33,6 +43,7 @@ export function usePendingAccessUsers() {
   return useQuery({
     queryKey: [...QUERY_KEY, "pending-access"],
     queryFn: () => usersService.getPendingAccess(),
+    staleTime: 2 * 60 * 1000, // 2 min
   });
 }
 
@@ -48,6 +59,7 @@ export function useAdminStats() {
   return useQuery({
     queryKey: ["admin", "stats"],
     queryFn: () => usersService.getStats(),
+    staleTime: 5 * 60 * 1000, // 5 min — aggregate stats are not real-time
   });
 }
 
@@ -59,7 +71,7 @@ export function useCreateUser() {
     mutationFn: (data: UserCreateInput) => usersService.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Usuario creado correctamente.");
     },
@@ -89,7 +101,7 @@ export function useUpdateUserProfile() {
         },
       );
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Perfil del usuario actualizado.");
     },
@@ -116,7 +128,7 @@ export function useUpdateUserDocument() {
         },
       );
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Documento actualizado correctamente.");
     },
@@ -135,7 +147,7 @@ export function useActivateUser() {
       usersService.setActive(id, is_active),
     onSuccess: (_, { is_active }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success(is_active ? "Usuario activado." : "Usuario desactivado.");
     },
@@ -165,7 +177,7 @@ export function useUpdateUserAccess() {
         },
       );
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success(
         status === "APPROVED" ? "Acceso aprobado." : "Acceso rechazado.",
@@ -191,7 +203,7 @@ export function useChangeUserRole() {
       usersService.changeRole(id, role_id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Rol actualizado correctamente.");
     },
@@ -209,7 +221,7 @@ export function useDeleteUser() {
     mutationFn: (id: string) => usersService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
-      useDataStore.getState().invalidateUsers();
+
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Usuario eliminado.");
     },
@@ -249,6 +261,7 @@ export function usePendingPasswordResets() {
   return useQuery({
     queryKey: [...QUERY_KEY, "password-resets", "pending"],
     queryFn: () => usersService.getPendingPasswordResets(),
+    staleTime: 2 * 60 * 1000, // 2 min
   });
 }
 

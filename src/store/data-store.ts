@@ -1,50 +1,60 @@
 /**
- * In-memory catalog store for reference data (users, courses).
- * Data is loaded once on first use and shared across all panels,
- * avoiding repeated API calls for the same catalog information.
- *
- * enrolledCountMap  — { [course_id]: number } built from the full enrollments list.
- * lessonCountMap    — { [course_id]: number } reserved for future lesson aggregation.
+ * In-memory store for derived analytics data and specific UI-centric datasets.
+ * Note: Reference catalogs (users, courses) are now strictly managed by
+ * TanStack Query to prevent double-rendering and duplicated state.
  */
 import { create } from "zustand";
-import type { User, Course } from "@/types";
 
 interface DataState {
-  users: User[];
-  courses: Course[];
-  usersLoaded: boolean;
-  coursesLoaded: boolean;
-
   /** Derived stat maps — populated once by useEnrollmentStats */
+  enrollments: import("@/types").Enrollment[];
   enrolledCountMap: Record<string, number>;
   enrollmentStatsLoaded: boolean;
 
-  setUsers: (users: User[]) => void;
-  setCourses: (courses: Course[]) => void;
-  setEnrolledCountMap: (map: Record<string, number>) => void;
+  setEnrollmentsData: (enrollments: import("@/types").Enrollment[], map: Record<string, number>) => void;
 
-  /** Reset catalog (e.g. after a mutation that modifies the list) */
-  invalidateUsers: () => void;
-  invalidateCourses: () => void;
+  /**
+   * Granular optimistic update — increment count for a course without
+   * discarding the whole cache and re-fetching 1,000 records.
+   * Call this from mutation onSuccess when a new enrollment is created.
+   */
+  incrementEnrolledCount: (courseId: string) => void;
+
+  /**
+   * Granular optimistic update — decrement count for a course.
+   * Call this from mutation onSuccess when an enrollment is cancelled/deleted.
+   */
+  decrementEnrolledCount: (courseId: string) => void;
+
   invalidateEnrollmentStats: () => void;
 }
 
 export const useDataStore = create<DataState>()((set) => ({
-  users: [],
-  courses: [],
-  usersLoaded: false,
-  coursesLoaded: false,
-
+  enrollments: [],
   enrolledCountMap: {},
   enrollmentStatsLoaded: false,
 
-  setUsers: (users) => set({ users, usersLoaded: true }),
-  setCourses: (courses) => set({ courses, coursesLoaded: true }),
-  setEnrolledCountMap: (map) =>
-    set({ enrolledCountMap: map, enrollmentStatsLoaded: true }),
+  setEnrollmentsData: (enrollments, map) =>
+    set({ enrollments, enrolledCountMap: map, enrollmentStatsLoaded: true }),
 
-  invalidateUsers: () => set({ users: [], usersLoaded: false }),
-  invalidateCourses: () => set({ courses: [], coursesLoaded: false }),
+  // Optimistic increment — avoids a 1,000-record re-fetch on every enroll mutation
+  incrementEnrolledCount: (courseId) =>
+    set((s) => ({
+      enrolledCountMap: {
+        ...s.enrolledCountMap,
+        [courseId]: (s.enrolledCountMap[courseId] ?? 0) + 1,
+      },
+    })),
+
+  // Optimistic decrement — avoids a 1,000-record re-fetch on every cancel mutation
+  decrementEnrolledCount: (courseId) =>
+    set((s) => ({
+      enrolledCountMap: {
+        ...s.enrolledCountMap,
+        [courseId]: Math.max(0, (s.enrolledCountMap[courseId] ?? 0) - 1),
+      },
+    })),
+
   invalidateEnrollmentStats: () =>
-    set({ enrolledCountMap: {}, enrollmentStatsLoaded: false }),
+    set({ enrollments: [], enrolledCountMap: {}, enrollmentStatsLoaded: false }),
 }));

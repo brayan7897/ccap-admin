@@ -24,10 +24,12 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   if (typeof window !== "undefined") {
     if (!sessionPromise) {
       sessionPromise = getSession().finally(() => {
-        // Limpiamos la caché en 1 segundo para que peticiones futuras obtengan datos frescos
+        // Cache the session promise for 30s — JWT doesn't change between requests.
+        // This prevents duplicate /api/auth/session calls when multiple useQuery
+        // hooks fire simultaneously on component mount.
         setTimeout(() => {
           sessionPromise = null;
-        }, 1000);
+        }, 30_000);
       });
     }
     const session = await sessionPromise;

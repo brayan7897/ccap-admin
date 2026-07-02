@@ -172,7 +172,7 @@ export function Sidebar() {
 			</div>
 
 			{/* Navigation */}
-			<nav className="flex-1 space-y-4 overflow-y-auto px-2 py-4">
+			<nav className="flex-1 space-y-3 overflow-y-auto px-2 py-3">
 				{navGroups.map(({ label, items }) => {
 					// Filter items based on permissions
 					const visibleItems = items.filter((item) => {
@@ -186,7 +186,7 @@ export function Sidebar() {
 					return (
 						<div key={label}>
 							{sidebarOpen && (
-								<p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+								<p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
 									{label}
 								</p>
 							)}
@@ -201,11 +201,12 @@ export function Sidebar() {
 											<Link
 												key={href}
 												href={href}
+												prefetch={false}
 												title={!sidebarOpen ? itemLabel : undefined}
 												className={cn(
 													"flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
 													active
-														? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+														? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
 														: "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
 													!sidebarOpen && "justify-center",
 												)}>

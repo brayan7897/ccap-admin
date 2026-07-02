@@ -6,6 +6,7 @@ export const certificateCreateSchema = z.object({
   drive_file_id: z.string().optional().or(z.literal("")),
   pdf_url: z.string().url("Debe ser una URL válida (ej. https://...)").optional().or(z.literal("")),
   html_content: z.string().optional().or(z.literal("")),
+  issued_at: z.string().optional().or(z.literal("")),
 });
 
 export const certificateEditSchema = z.object({

@@ -46,7 +46,7 @@ export default function CertificatesPage() {
 
 	const filteredData = useMemo(() => {
 		if (!data) return [];
-		const search = searchQuery.toLowerCase();
+		const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
 		return data.filter((c) => {
 			const studentName = (userMap[c.user_id] ?? c.user_id).toLowerCase();
 			const courseName = (courseMap[c.course_id] ?? c.course_id).toLowerCase();

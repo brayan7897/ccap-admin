@@ -11,6 +11,8 @@ import {
 	useUpdateUserAccess,
 	useUsers,
 } from "@/features/users/hooks/useUsers";
+import { useDebounce } from "@/hooks/useDebounce";
+import { type SortingState } from "@tanstack/react-table";
 import type { CourseAccess, User } from "@/types";
 import { UserModal } from "@/components/shared/UserModal";
 import { AccessModal } from "@/components/shared/AccessModal";
@@ -29,7 +31,6 @@ const ACCESS_OPTIONS: { value: CourseAccess | "ALL"; label: string }[] = [
 
 export function UsersPageClient() {
 	const searchParams = useSearchParams();
-	const { data, isLoading, isError } = useUsers();
 	const deleteUser = useDeleteUser();
 	const updateAccess = useUpdateUserAccess();
 
@@ -41,22 +42,31 @@ export function UsersPageClient() {
 	const [accessUser, setAccessUser] = useState<User | null>(null);
 
 	const [searchQuery, setSearchQuery] = useState("");
+	const validSearchQuery = searchQuery.length >= 3 ? searchQuery : "";
+	const debouncedSearchQuery = useDebounce(validSearchQuery, 400);
+	
+	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
+	const [sorting, setSorting] = useState<SortingState>([]);
+
+	const sort_by = sorting.length > 0 ? sorting[0].id : undefined;
+	const sort_order = sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : undefined;
+
+	const { data, isLoading, isError } = useUsers(
+		pagination.pageIndex * pagination.pageSize,
+		pagination.pageSize,
+		undefined, // is_active
+		debouncedSearchQuery,
+		sort_by,
+		sort_order
+	);
+
 	const [selectedViewUser, setSelectedViewUser] = useState<User | null>(null);
 	const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
 
 	const filteredData = useMemo(() => {
 		if (!data) return [];
 		return data.filter((u) => {
-			const matchesAccess = accessFilter === "ALL" || u.course_access === accessFilter;
-			const search = searchQuery.toLowerCase();
-			const matchesSearch =
-				!search ||
-				u.first_name.toLowerCase().includes(search) ||
-				u.last_name.toLowerCase().includes(search) ||
-				u.email.toLowerCase().includes(search) ||
-				(u.document_number && u.document_number.includes(search));
-			
-			return matchesAccess && matchesSearch;
+			return accessFilter === "ALL" || u.course_access === accessFilter;
 		});
 	}, [data, accessFilter, searchQuery]);
 
@@ -145,9 +155,16 @@ export function UsersPageClient() {
 						<DataTable
 							columns={columns}
 							data={filteredData}
-							searchPlaceholder="Buscar en resultados..."
+							rowCount={data?.length ?? 0}
+							searchPlaceholder="Buscar por nombre, correo, DNI..."
 							hideSearch
 							onRowClick={setSelectedViewUser}
+							manualPagination
+							pagination={pagination}
+							onPaginationChange={setPagination}
+							manualSorting
+							sorting={sorting}
+							onSortingChange={setSorting}
 						/>
 					</div>
 

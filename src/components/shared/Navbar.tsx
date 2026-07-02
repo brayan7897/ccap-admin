@@ -206,9 +206,9 @@ export function Navbar() {
 						<button
 							onClick={() => setMenuOpen((v) => !v)}
 							aria-label="Menú de usuario"
-							className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-foreground hover:bg-muted transition-colors">
+							className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted transition-colors duration-150">
 							{/* Avatar initials */}
-							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+							<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
 								{initials}
 							</span>
 							<div className="hidden flex-col items-start sm:flex">
@@ -220,21 +220,21 @@ export function Navbar() {
 								</span>
 							</div>
 							<ChevronDown
-								className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${menuOpen ? "rotate-180" : ""}`}
+								className={`h-4 w-4 text-muted-foreground transition-transform duration-150 ${menuOpen ? "rotate-180" : ""}`}
 							/>
 						</button>
 
 						{menuOpen && (
-							<div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-border bg-card shadow-lg">
+							<div className="absolute right-0 top-full z-50 mt-1.5 w-56 rounded-xl border border-border bg-card shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
 								{/* Admin info */}
-								<div className="border-b border-border px-4 py-3">
+								<div className="border-b border-border px-4 py-3 bg-muted/20">
 									<p className="truncate text-sm font-semibold text-foreground">
 										{fullName}
 									</p>
 									<p className="truncate text-xs text-muted-foreground">
 										{email}
 									</p>
-									<span className="mt-1.5 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+									<span className="mt-1.5 inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
 										{roleName}
 									</span>
 								</div>
@@ -262,7 +262,7 @@ export function Navbar() {
 									<button
 										onClick={handleSignOut}
 										disabled={signingOut}
-										className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:pointer-events-none disabled:opacity-50">
+										className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:pointer-events-none disabled:opacity-50">
 										<LogOut className="h-4 w-4" />
 										{signingOut ? "Saliendo…" : "Cerrar sesión"}
 									</button>

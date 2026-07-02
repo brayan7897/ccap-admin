@@ -70,123 +70,138 @@ function CreateUserForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Name */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Nombre *</label>
-          <input {...register("first_name")} placeholder="Ana" className={FIELD} />
-          {errors.first_name && (
-            <p className="text-xs text-destructive">{errors.first_name.message}</p>
-          )}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {/* Datos Personales */}
+      <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+        <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+          <UserIcon className="h-4 w-4 text-primary" />
+          Datos Personales
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Nombre *</label>
+            <input {...register("first_name")} placeholder="Ana" className={FIELD} />
+            {errors.first_name && (
+              <p className="text-xs text-destructive">{errors.first_name.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Apellido *</label>
+            <input {...register("last_name")} placeholder="García" className={FIELD} />
+            {errors.last_name && (
+              <p className="text-xs text-destructive">{errors.last_name.message}</p>
+            )}
+          </div>
         </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Apellido *</label>
-          <input {...register("last_name")} placeholder="García" className={FIELD} />
-          {errors.last_name && (
-            <p className="text-xs text-destructive">{errors.last_name.message}</p>
-          )}
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Tipo de doc. *</label>
+            <select {...register("document_type")} className={FIELD}>
+              {DOC_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">N.º de documento *</label>
+            <input
+              {...register("document_number")}
+              placeholder="12345678"
+              className={FIELD}
+            />
+            {errors.document_number && (
+              <p className="text-xs text-destructive">{errors.document_number.message}</p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Email */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium">Email *</label>
-        <input
-          {...register("email")}
-          type="email"
-          placeholder="usuario@ejemplo.com"
-          className={FIELD}
-        />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-
-      {/* Password */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium">Contraseña *</label>
-        <input
-          {...register("password")}
-          type="password"
-          placeholder="Mínimo 8 caracteres"
-          className={FIELD}
-        />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        )}
-      </div>
-
-      {/* Document */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Tipo de doc. *</label>
-          <select {...register("document_type")} className={FIELD}>
-            {DOC_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium">N.º de documento *</label>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Teléfono</label>
           <input
-            {...register("document_number")}
-            placeholder="12345678"
+            {...register("phone_number")}
+            placeholder="+51 999 000 000"
             className={FIELD}
           />
-          {errors.document_number && (
-            <p className="text-xs text-destructive">{errors.document_number.message}</p>
-          )}
         </div>
       </div>
 
-      {/* Phone */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium">Teléfono</label>
-        <input
-          {...register("phone_number")}
-          placeholder="+51 999 000 000"
-          className={FIELD}
-        />
+      {/* Credenciales y Acceso */}
+      <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+        <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          Credenciales y Acceso
+        </h3>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Email *</label>
+            <input
+              {...register("email")}
+              type="email"
+              placeholder="usuario@ejemplo.com"
+              className={FIELD}
+            />
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Contraseña *</label>
+            <input
+              {...register("password")}
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              className={FIELD}
+            />
+            {errors.password && (
+              <p className="text-xs text-destructive">{errors.password.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Rol</label>
+            <select
+              {...register("role_id")}
+              className={FIELD}
+              disabled={isLoadingRoles}>
+              <option value="">(Estudiante por defecto)</option>
+              {roles?.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 pt-8">
+            <input
+              type="checkbox"
+              id="create_is_active"
+              {...register("is_active")}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+            />
+            <label htmlFor="create_is_active" className="text-sm font-medium">
+              Cuenta activa
+            </label>
+          </div>
+        </div>
       </div>
 
-      {/* Role */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium">Rol</label>
-        <select
-          {...register("role_id")}
-          className={FIELD}
-          disabled={isLoadingRoles}>
-          <option value="">(Sin rol definido)</option>
-          {roles?.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </select>
+      <div className="pt-2">
+        <button
+          type="submit"
+          disabled={createUser.isPending}
+          className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+          {createUser.isPending ? "Creando…" : "Crear usuario"}
+        </button>
       </div>
-
-      {/* Is active */}
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="create_is_active"
-          {...register("is_active")}
-          className="h-4 w-4"
-        />
-        <label htmlFor="create_is_active" className="text-sm font-medium">
-          Cuenta activa
-        </label>
-      </div>
-
-      <button
-        type="submit"
-        disabled={createUser.isPending}
-        className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-        {createUser.isPending ? "Creando…" : "Crear usuario"}
-      </button>
     </form>
   );
 }

@@ -46,7 +46,7 @@ export function useInbox(limit = 5) {
   return useQuery({
     queryKey: [...INBOX_KEY, { limit }],
     queryFn: () => notificationsService.getInbox(0, limit),
-    staleTime: 30_000,
+    staleTime: 60_000, // 1 min — inbox doesn't need instant refresh
   });
 }
 
@@ -54,7 +54,8 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: UNREAD_KEY,
     queryFn: () => notificationsService.getUnreadCount(),
-    refetchInterval: 30_000, // poll every 30s
+    refetchInterval: 60_000, // poll every 60s (was 30s)
+    refetchIntervalInBackground: false, // pause when tab is hidden
     staleTime: 0,
   });
 }

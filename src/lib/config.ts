@@ -1,6 +1,12 @@
-export const DEFAULT_API_URL = "https://api.ccapglobal.com/api/v1";
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
 
-const rawApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim() ?? "";
-export const API_URL = rawApiUrl || DEFAULT_API_URL;
+if (!rawApiUrl && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "[ccap-admin] NEXT_PUBLIC_API_URL is required in production. " +
+    "Set it in your environment variables or .env.local file."
+  );
+}
 
+// In development, fall back to localhost if env is not set
+export const API_URL = rawApiUrl ?? "http://localhost:8000/api/v1";
 

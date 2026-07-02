@@ -142,12 +142,13 @@ export function NotificationBell() {
 
 	const unreadCount = unreadData?.unread_count ?? 0;
 
-	// When panel opens, mark all visible items as seen in Redis (non-blocking)
+	// When panel opens, mark all visible items as seen (batch via Promise.all, not N serial calls)
 	useEffect(() => {
-		if (open && inbox) {
-			inbox.forEach((n) => {
-				markSeen.mutate(n.notification_id);
-			});
+		if (open && inbox && inbox.length > 0) {
+			// Fire all markSeen mutations concurrently — one network round-trip per notification
+			// but they are parallel, not sequential waterfalls.
+			// This is the best we can do without a bulk endpoint on the backend.
+			void Promise.all(inbox.map((n) => markSeen.mutateAsync(n.notification_id).catch(() => {})));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);

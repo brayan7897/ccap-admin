@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
-import { DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-	variable: "--font-dm-sans",
+const inter = Inter({
 	subsets: ["latin"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-	variable: "--font-jetbrains-mono",
-	subsets: ["latin"],
+	variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -46,7 +41,7 @@ export default function RootLayout({
 				<script dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
 			<body
-				className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+				className={`${inter.variable} font-sans antialiased`}>
 				<SessionProvider>
 					<QueryProvider>
 						<ThemeProvider>

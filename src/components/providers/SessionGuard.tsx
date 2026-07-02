@@ -16,9 +16,9 @@ import { useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/config";
+import { api } from "@/lib/api";
 
 const POLL_INTERVAL_MS = 60_000; // check every 60 s
-const BASE_URL = API_URL;
 
 export function SessionGuard({ children }: { children: React.ReactNode }) {
 	const { data: session, status } = useSession();
@@ -47,24 +47,16 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
 			const currentSession = sessionRef.current;
 			if (!currentSession?.access_token) return; // not authenticated — middleware handles redirect
 
-			const res = await fetch(`${BASE_URL}/auth/session/verify`, {
-				method: "GET",
-				headers: {
-					Authorization: `Bearer ${currentSession.access_token}`,
-					"Content-Type": "application/json",
-				},
-			});
+			// Using api.get instead of raw fetch. The interceptor in api.ts will inject the token.
+			// We handle the specific 401 SessionInvalid case manually before the global interceptor
+			// redirects us (the global interceptor handles generic 401s).
+			try {
+				await api.get("/auth/session/verify");
+			} catch (err: any) {
+				const status = err.response?.status;
+				const type = err.response?.data?.type;
 
-			if (res.status === 401) {
-				let type: string | undefined;
-				try {
-					const body = await res.json();
-					type = body?.type;
-				} catch {
-					/* non-JSON body — ignore */
-				}
-
-				if (type === "SessionInvalid" && isMountedRef.current) {
+				if (status === 401 && type === "SessionInvalid" && isMountedRef.current) {
 					toast.error(
 						"Tu sesión fue cerrada porque iniciaste sesión en otro dispositivo.",
 						{ id: "session-displaced", duration: 6000 },

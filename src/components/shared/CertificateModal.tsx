@@ -45,7 +45,11 @@ export function CertificateModal({
 		setIsPending(true);
 		try {
 			if (!isEditing) {
-				await certificatesService.create(data as CertificateCreateInput);
+				const payload = { ...data } as Record<string, any>;
+				if (!payload.issued_at) {
+					delete payload.issued_at;
+				}
+				await certificatesService.create(payload as CertificateCreateInput);
 				toast.success("Certificado creado exitosamente.");
 			} else {
 				await certificatesService.update(certificate.id, data as CertificateEditInput);

@@ -12,30 +12,46 @@ import { useDataStore } from "@/store/data-store";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { type SortingState } from "@tanstack/react-table";
 import { CourseFilters } from "./_components/CourseFilters";
 import { CourseCard } from "./_components/CourseCard";
 
 export default function CoursesPage() {
-	const { data, isLoading, isError } = useCourses();
 	const deleteCourse = useDeleteCourse();
-
-	useEnrollmentStats();
-	const enrolledCountMap = useDataStore((s) => s.enrolledCountMap);
 
 	// Filtros locales
 	const [searchQuery, setSearchQuery] = useState("");
+	const validSearchQuery = searchQuery.length >= 3 ? searchQuery : "";
+	const debouncedSearchQuery = useDebounce(validSearchQuery, 400);
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [typeFilter, setTypeFilter] = useState("all");
+
+	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
+	const [sorting, setSorting] = useState<SortingState>([]);
+
+	const sort_by = sorting.length > 0 ? sorting[0].id : undefined;
+	const sort_order = sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : undefined;
+
+	const { data, isLoading, isError } = useCourses(
+		pagination.pageIndex * pagination.pageSize,
+		pagination.pageSize,
+		debouncedSearchQuery,
+		sort_by,
+		sort_order
+	);
+
+	useEnrollmentStats();
+	// Use a stable selector — re-renders ONLY when the map reference actually changes,
+	// not on every unrelated store update. (rule: rerender-derived-state)
+	const enrolledCountMap = useDataStore((s) => s.enrolledCountMap);
+
+
 
 	// Filtrado de la data
 	const filteredData = useMemo(() => {
 		if (!data) return [];
 		return data.filter((course) => {
-			// Búsqueda
-			const matchesSearch = course.title
-				.toLowerCase()
-				.includes(searchQuery.toLowerCase());
-			
 			// Estado
 			const matchesStatus =
 				statusFilter === "all" ||
@@ -48,9 +64,9 @@ export default function CoursesPage() {
 				(typeFilter === "free" && course.course_type === "FREE") ||
 				(typeFilter === "paid" && course.course_type === "PAID");
 
-			return matchesSearch && matchesStatus && matchesType;
+			return matchesStatus && matchesType;
 		});
-	}, [data, searchQuery, statusFilter, typeFilter]);
+	}, [data, statusFilter, typeFilter]);
 
 	const columns = useMemo(
 		() =>
@@ -105,8 +121,15 @@ export default function CoursesPage() {
 						<DataTable
 							columns={columns}
 							data={filteredData}
-							searchPlaceholder="Buscar en resultados..."
-							hideSearch // Si tu DataTable permite ocultar la búsqueda interna, sino la dejamos
+							rowCount={data?.length ?? 0}
+							searchPlaceholder="Buscar cursos..."
+							hideSearch
+							manualPagination
+							pagination={pagination}
+							onPaginationChange={setPagination}
+							manualSorting
+							sorting={sorting}
+							onSortingChange={setSorting}
 						/>
 					</div>
 

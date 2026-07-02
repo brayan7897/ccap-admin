@@ -13,21 +13,51 @@ export const usersService = {
     skip = 0,
     limit = 50,
     is_active?: boolean,
+    q?: string,
+    sort_by?: string,
+    sort_order?: "asc" | "desc"
   ): Promise<User[]> {
-    const params = { skip, limit, ...(is_active !== undefined && { is_active }) };
-    const res = await api.get<User[]>("/admin/users", { params });
+    const params: Record<string, any> = { skip, limit };
+    if (is_active !== undefined) params.is_active = is_active;
+    if (q) params.q = q;
+    if (sort_by) params.sort_by = sort_by;
+    if (sort_order) params.sort_order = sort_order;
+    
+    const res = await api.get<User[]>("/admin/v1/users", { params });
     return res.data;
   },
 
   // ── Admin: pending users waiting for account activation (is_active=false) ─
-  async getPending(): Promise<User[]> {
-    const res = await api.get<User[]>("/admin/users/pending");
+  async getPending(
+    skip = 0,
+    limit = 50,
+    q?: string,
+    sort_by?: string,
+    sort_order?: "asc" | "desc"
+  ): Promise<User[]> {
+    const params: Record<string, any> = { skip, limit };
+    if (q) params.q = q;
+    if (sort_by) params.sort_by = sort_by;
+    if (sort_order) params.sort_order = sort_order;
+    
+    const res = await api.get<User[]>("/admin/v1/users/pending", { params });
     return res.data;
   },
 
   // ── Admin: users waiting for course access approval ────────────────────────
-  async getPendingAccess(): Promise<User[]> {
-    const res = await api.get<User[]>("/users/pending-access");
+  async getPendingAccess(
+    skip = 0,
+    limit = 50,
+    q?: string,
+    sort_by?: string,
+    sort_order?: "asc" | "desc"
+  ): Promise<User[]> {
+    const params: Record<string, any> = { skip, limit };
+    if (q) params.q = q;
+    if (sort_by) params.sort_by = sort_by;
+    if (sort_order) params.sort_order = sort_order;
+    
+    const res = await api.get<User[]>("/v1/users/pending-access", { params });
     return res.data;
   },
 

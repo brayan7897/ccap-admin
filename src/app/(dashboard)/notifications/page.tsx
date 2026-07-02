@@ -31,7 +31,7 @@ export default function NotificationsPage() {
 		if (!data) return [];
 		return data.filter((n) => {
 			const matchesType = typeFilter === "ALL" || n.type === typeFilter;
-			const search = searchQuery.toLowerCase();
+			const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
 			const matchesSearch = !search || n.title.toLowerCase().includes(search) || n.message.toLowerCase().includes(search);
 			return matchesType && matchesSearch;
 		});

@@ -11,6 +11,7 @@ export function useCategories() {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => categoriesService.getAll(),
+    staleTime: 10 * 60 * 1000, // 10 min — categories rarely change
   });
 }
 

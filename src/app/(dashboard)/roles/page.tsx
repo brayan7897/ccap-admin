@@ -58,7 +58,7 @@ export default function RolesPage() {
 
 	const filteredRoles = useMemo(() => {
 		if (!rolesData) return [];
-		const search = searchQuery.toLowerCase();
+		const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
 		return rolesData.filter((r) => !search || r.name.toLowerCase().includes(search));
 	}, [rolesData, searchQuery]);
 
