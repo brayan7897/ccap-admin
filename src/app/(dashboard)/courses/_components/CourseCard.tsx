@@ -11,6 +11,18 @@ const LEVEL_LABELS: Record<string, string> = {
 	ADVANCED: "Avanzado",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+	draft: "Borrador",
+	published: "Publicado",
+	archived: "Archivado",
+};
+
+const STATUS_CLASSES: Record<string, string> = {
+	draft: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+	published: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+	archived: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+};
+
 interface CourseCardProps {
 	course: Course;
 	enrolledCount: number | string;
@@ -32,17 +44,27 @@ export function CourseCard({ course, enrolledCount, onDelete }: CourseCardProps)
 						{course.title}
 					</Link>
 					
-					{/* Status badge */}
-					<span
-						className={cn(
-							"shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
-							course.is_published
-								? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-								: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+					{/* Status badges */}
+					<div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+						<span
+							className={cn(
+								"inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+								STATUS_CLASSES[course.status]
+							)}
+						>
+							{STATUS_LABELS[course.status]}
+						</span>
+						{course.featured && (
+							<span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+								Destacado
+							</span>
 						)}
-					>
-						{course.is_published ? "Publicado" : "Borrador"}
-					</span>
+						{course.certificate_only && (
+							<span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+								Solo certificado
+							</span>
+						)}
+					</div>
 				</div>
 
 				<div className="flex flex-col gap-1.5 mt-3 mb-4 text-xs text-muted-foreground">

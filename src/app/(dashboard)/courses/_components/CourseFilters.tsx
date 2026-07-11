@@ -44,6 +44,7 @@ export function CourseFilters({
 					<option value="all">Todos los estados</option>
 					<option value="published">Publicado</option>
 					<option value="draft">Borrador</option>
+					<option value="archived">Archivado</option>
 				</select>
 
 				<select

@@ -18,7 +18,9 @@ export const courseSchema = z
     requirements: z.array(z.string()),
     what_you_will_learn: z.array(z.string()),
     tags: z.array(z.string()),
-    is_published: z.boolean(),
+    status: z.enum(["draft", "published", "archived"]).default("draft"),
+    featured: z.boolean().default(false),
+    certificate_only: z.boolean().default(false),
   })
   .refine(
     (data) => data.course_type !== "PAID" || (data.price != null && data.price > 0),

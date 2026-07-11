@@ -26,6 +26,7 @@ import {
 } from "@/features/courses/schemas/course.schema";
 import { useUsers } from "@/features/users/hooks/useUsers";
 import { useCategories } from "@/features/categories/hooks/useCategories";
+import { InstructorCombobox } from "@/components/shared/InstructorCombobox";
 
 const LEVELS = [
 	{ value: "BASIC", label: "Básico" },
@@ -70,7 +71,9 @@ export function CourseForm({
 			course_level: "BASIC",
 			course_type: "FREE",
 			price: null,
-			is_published: false,
+			status: "draft",
+			featured: false,
+			certificate_only: false,
 			requirements: [],
 			what_you_will_learn: [],
 			tags: [],
@@ -82,8 +85,9 @@ export function CourseForm({
 
 	const courseType = useWatch({ control, name: "course_type" });
 	const tags = useWatch({ control, name: "tags" }) ?? [];
-	const isPublished = useWatch({ control, name: "is_published" });
+	const status = useWatch({ control, name: "status" });
 	const thumbnailUrl = useWatch({ control, name: "thumbnail_url" });
+	const instructorId = useWatch({ control, name: "instructor_id" });
 
 	const isNewCourse = !defaultValues?.slug;
 	function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -252,14 +256,11 @@ export function CourseForm({
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 							<div>
 								<label className={lbl}>Instructor *</label>
-								<select {...register("instructor_id")} className={getFieldClass(!!errors.instructor_id)}>
-									<option value="">— Selecciona un instructor —</option>
-									{(instructors.length > 0 ? instructors : (users ?? [])).map((u) => (
-										<option key={u.id} value={u.id}>
-											{u.full_name || `${u.first_name} ${u.last_name}`} ({u.email})
-										</option>
-									))}
-								</select>
+								<InstructorCombobox
+									instructors={instructors.length > 0 ? instructors : (users ?? [])}
+									value={instructorId || ""}
+									onChange={(val) => setValue("instructor_id", val, { shouldValidate: true })}
+								/>
 								{errors.instructor_id && <p className={err}><AlertCircle className="h-3.5 w-3.5" />{errors.instructor_id.message}</p>}
 							</div>
 							<div>
@@ -352,25 +353,51 @@ export function CourseForm({
 					<div className="p-6 space-y-6">
 						<div>
 							<h3 className="text-lg font-medium text-foreground mb-4">Estado del Curso</h3>
-							<label className="flex items-center justify-between cursor-pointer rounded-lg border border-border p-4 hover:bg-muted/30 transition-colors">
-								<div>
-									<p className="font-medium text-sm text-foreground">
-										{isPublished ? "Publicado" : "Borrador"}
-									</p>
-									<p className="text-xs text-muted-foreground mt-0.5">
-										{isPublished ? "Visible para los estudiantes" : "Oculto para los estudiantes"}
-									</p>
-								</div>
-								<div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-									<input
-										type="checkbox"
-										{...register("is_published")}
-										className="peer sr-only"
-									/>
-									<div className="h-6 w-11 rounded-full bg-muted border-2 border-transparent transition-colors peer-checked:bg-primary"></div>
-									<div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></div>
-								</div>
-							</label>
+							<div>
+								<label className={lbl}>Estado *</label>
+								<select {...register("status")} className={getFieldClass(!!errors.status)}>
+									<option value="draft">Borrador</option>
+									<option value="published">Publicado</option>
+									<option value="archived">Archivado</option>
+								</select>
+								<p className="mt-1.5 text-xs text-muted-foreground">
+									{status === "draft" && "Oculto para los estudiantes mientras se termina de preparar."}
+									{status === "published" && "Visible para los estudiantes en el catálogo y el landing."}
+									{status === "archived" && "Curso antiguo oculto del catálogo público, pero conserva certificados e inscripciones."}
+								</p>
+							</div>
+
+							<div className="mt-5 space-y-3">
+								<label className="flex items-center justify-between cursor-pointer rounded-lg border border-border p-4 hover:bg-muted/30 transition-colors">
+									<div>
+										<p className="font-medium text-sm text-foreground">Destacar en landing</p>
+										<p className="text-xs text-muted-foreground mt-0.5">
+											Aparecerá en la sección de cursos destacados de la página pública.
+										</p>
+									</div>
+									<div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 shrink-0 ml-4">
+										<input type="checkbox" {...register("featured")} className="peer sr-only" />
+										<div className="h-6 w-11 rounded-full bg-muted border-2 border-transparent transition-colors peer-checked:bg-primary"></div>
+										<div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></div>
+									</div>
+								</label>
+
+								<label className="flex items-center justify-between cursor-pointer rounded-lg border border-border p-4 hover:bg-muted/30 transition-colors">
+									<div>
+										<p className="font-medium text-sm text-foreground">Solo para certificado</p>
+										<p className="text-xs text-muted-foreground mt-0.5">
+											Oculto del catálogo, la búsqueda y el acceso directo por link en la
+											página pública. Se sigue gestionando con normalidad desde el admin
+											(inscripción, certificados).
+										</p>
+									</div>
+									<div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 shrink-0 ml-4">
+										<input type="checkbox" {...register("certificate_only")} className="peer sr-only" />
+										<div className="h-6 w-11 rounded-full bg-muted border-2 border-transparent transition-colors peer-checked:bg-primary"></div>
+										<div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></div>
+									</div>
+								</label>
+							</div>
 						</div>
 
 						<div className="pt-2">

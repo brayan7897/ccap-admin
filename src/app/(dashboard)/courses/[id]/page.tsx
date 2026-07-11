@@ -37,10 +37,13 @@ export default function CourseDetailPage({ params }: Props) {
 	const handleSubmit = async (data: CourseInput) => {
 		if (isNew) {
 			const createdCourse = await createCourse.mutateAsync(data);
-			// POST /courses/ no admite is_published ni thumbnail_url — si el usuario
-			// los definió en la creación, se aplican con un PUT inmediato.
+			// POST /courses/ no admite status/featured/certificate_only ni
+			// thumbnail_url — si el usuario los definió en la creación, se
+			// aplican con un PUT inmediato.
 			const postCreateUpdate: Partial<CourseInput> = {};
-			if (data.is_published) postCreateUpdate.is_published = true;
+			if (data.status !== "draft") postCreateUpdate.status = data.status;
+			if (data.featured) postCreateUpdate.featured = true;
+			if (data.certificate_only) postCreateUpdate.certificate_only = true;
 			if (data.thumbnail_url) postCreateUpdate.thumbnail_url = data.thumbnail_url;
 
 			if (Object.keys(postCreateUpdate).length > 0) {
@@ -116,7 +119,9 @@ export default function CourseDetailPage({ params }: Props) {
 										price: course.price ?? null,
 										instructor_id: course.instructor_id,
 										category_id: course.category_id ?? undefined,
-										is_published: course.is_published,
+										status: course.status,
+										featured: course.featured,
+										certificate_only: course.certificate_only,
 										thumbnail_url: course.thumbnail_url ?? "",
 										requirements: course.requirements,
 										what_you_will_learn: course.what_you_will_learn,

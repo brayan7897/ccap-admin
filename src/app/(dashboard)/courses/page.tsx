@@ -54,10 +54,8 @@ export default function CoursesPage() {
 		return data.filter((course) => {
 			// Estado
 			const matchesStatus =
-				statusFilter === "all" ||
-				(statusFilter === "published" && course.is_published) ||
-				(statusFilter === "draft" && !course.is_published);
-			
+				statusFilter === "all" || course.status === statusFilter;
+
 			// Tipo
 			const matchesType =
 				typeFilter === "all" ||

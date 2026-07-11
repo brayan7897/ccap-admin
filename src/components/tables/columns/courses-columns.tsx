@@ -11,6 +11,18 @@ const LEVEL_LABELS: Record<string, string> = {
   ADVANCED: "Avanzado",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Borrador",
+  published: "Publicado",
+  archived: "Archivado",
+};
+
+const STATUS_CLASSES: Record<string, string> = {
+  draft: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  published: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  archived: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+};
+
 /** Formatea una fecha ISO a día/mes/año en locale es-PE */
 function formatDate(iso: string | undefined | null): string {
   if (!iso) return "—";
@@ -85,17 +97,25 @@ export function buildCoursesColumns(
 			meta: { className: "hidden lg:table-cell" },
 		},
 		{
-			accessorKey: "is_published",
+			accessorKey: "status",
 			header: "Estado",
 			cell: ({ row }) => (
-				<span
-					className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-						row.original.is_published
-							? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-							: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-					}`}>
-					{row.original.is_published ? "Publicado" : "Borrador"}
-				</span>
+				<div className="flex flex-wrap items-center gap-1">
+					<span
+						className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[row.original.status]}`}>
+						{STATUS_LABELS[row.original.status]}
+					</span>
+					{row.original.featured && (
+						<span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+							Destacado
+						</span>
+					)}
+					{row.original.certificate_only && (
+						<span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+							Solo certificado
+						</span>
+					)}
+				</div>
 			),
 		},
 		{

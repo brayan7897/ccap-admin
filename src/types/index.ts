@@ -5,6 +5,7 @@ export type DocumentType = "DNI" | "CE" | "PASAPORTE";
 export type CourseLevel = "BASIC" | "INTERMEDIATE" | "ADVANCED";
 export type CourseAccess = "NONE" | "PENDING" | "APPROVED" | "REJECTED";
 export type CourseType = "FREE" | "PAID";
+export type CourseStatus = "draft" | "published" | "archived";
 export type LessonType = "VIDEO" | "PDF" | "TEXT";
 export type ResourceType = "MAIN" | "SECONDARY";
 export type ResourceFormat = "VIDEO" | "PDF" | "DOCUMENT" | "LINK" | "IMAGE";
@@ -51,6 +52,8 @@ export interface User {
   role_name: string | null;
   role?: Role;
   is_active: boolean;
+  /** False = admin-created "provisional" record with no password/login yet. */
+  is_claimed?: boolean;
   course_access: CourseAccess;
   permissions?: string[];
   created_at: string;
@@ -78,7 +81,9 @@ export interface Course {
   requirements: string[];
   what_you_will_learn: string[];
   tags: string[];
-  is_published: boolean;
+  status: CourseStatus;
+  featured: boolean;
+  certificate_only: boolean;
   instructor_id: string;
   instructor_name?: string;
   instructor_email?: string;

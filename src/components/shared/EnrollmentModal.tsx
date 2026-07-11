@@ -23,7 +23,7 @@ export function EnrollmentModal({ isOpen, onClose }: EnrollmentModalProps) {
 
 	if (!isOpen) return null;
 
-	const publishedCourses = courses.filter((c) => c.is_published);
+	const publishedCourses = courses.filter((c) => c.status === "published");
 
 	function handleClose() {
 		setUserId("");
