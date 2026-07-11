@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
 import type { User } from "@/types";
+import { useUsersSearch } from "@/hooks/useCatalog";
 
 interface UserComboboxProps {
 	value: string;
@@ -22,12 +23,22 @@ export function UserCombobox({
 	const fieldClasses =
 		"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:border-muted-foreground/30";
 
-	const selectedUser = users.find((u) => u.id === value);
 	const [userSearch, setUserSearch] = useState("");
 	const [isOpen, setIsOpen] = useState(false);
+	// Caches the picked User so the closed combobox keeps showing them even if
+	// they came from a live search result outside the `users` prop, or the
+	// search text changes/clears afterward.
+	const [selectedUserCache, setSelectedUserCache] = useState<User | null>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
+	// Below 3 characters we filter the (max 50) `users` prop client-side, same as
+	// before. At 3+ characters we switch to a live server search so users beyond
+	// that initial cap — or created after it loaded — are still reachable.
+	const isLiveSearch = userSearch.trim().length >= 3;
+	const { results: searchResults } = useUsersSearch(userSearch);
+
 	const filteredUsers = useMemo(() => {
+		if (isLiveSearch) return searchResults;
 		const q = userSearch.toLowerCase().trim();
 		if (!q) return users.slice(0, 50); // Show max 50 initially
 		return users
@@ -40,7 +51,12 @@ export function UserCombobox({
 					u.email?.toLowerCase().includes(q)
 			)
 			.slice(0, 50);
-	}, [userSearch, users]);
+	}, [isLiveSearch, searchResults, userSearch, users]);
+
+	const selectedUser =
+		selectedUserCache?.id === value
+			? selectedUserCache
+			: (users.find((u) => u.id === value) ?? searchResults.find((u) => u.id === value));
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -82,6 +98,11 @@ export function UserCombobox({
 							value={userSearch}
 							onChange={(e) => setUserSearch(e.target.value)}
 							onClick={(e) => e.stopPropagation()}
+							onKeyDown={(e) => {
+								// This input sits inside the surrounding <form> — Enter would
+								// otherwise submit the form before a result is picked.
+								if (e.key === "Enter") e.preventDefault();
+							}}
 							autoFocus
 						/>
 					</div>
@@ -97,6 +118,7 @@ export function UserCombobox({
 									type="button"
 									onClick={() => {
 										onChange(u.id);
+										setSelectedUserCache(u);
 										setIsOpen(false);
 										setUserSearch("");
 									}}
@@ -110,6 +132,7 @@ export function UserCombobox({
 										</span>
 										<span className="text-xs text-muted-foreground truncate mt-0.5">
 											DNI: {u.document_number} · {u.email}
+											{u.is_claimed === false && " · Cuenta provisional"}
 										</span>
 									</div>
 									{value === u.id && <Check className="h-4 w-4 shrink-0" />}

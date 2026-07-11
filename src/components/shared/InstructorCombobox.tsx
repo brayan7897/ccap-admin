@@ -2,58 +2,72 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
-import type { Course } from "@/types";
-import { useCoursesSearch } from "@/hooks/useCatalog";
+import type { User } from "@/types";
+import { useUsersSearch } from "@/hooks/useCatalog";
 
-interface CourseComboboxProps {
+interface InstructorComboboxProps {
 	value: string;
 	onChange: (value: string) => void;
-	courses: Course[];
+	instructors: User[];
 	disabled?: boolean;
 	placeholder?: string;
 }
 
-export function CourseCombobox({
+function isInstructorCandidate(u: User): boolean {
+	const roleName = (u.role_name ?? u.role?.name ?? "").toLowerCase();
+	return roleName.includes("instructor") || roleName.includes("admin");
+}
+
+/**
+ * Instructor picker for CourseForm. Previously a bare native <select> fed by
+ * `useUsers()` capped at the first 50 users, with no search at all — the most
+ * severe instance of the "capped catalog, can't reach anyone past it" bug
+ * found across the admin app, since a native <select> has no typeahead
+ * fallback whatsoever. Mirrors UserCombobox's live-search fix.
+ */
+export function InstructorCombobox({
 	value,
 	onChange,
-	courses,
+	instructors,
 	disabled = false,
-	placeholder = "Buscar curso por nombre...",
-}: CourseComboboxProps) {
+	placeholder = "Buscar instructor por nombre o email...",
+}: InstructorComboboxProps) {
 	const fieldClasses =
 		"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:border-muted-foreground/30";
 
 	const [search, setSearch] = useState("");
 	const [isOpen, setIsOpen] = useState(false);
-	// Caches the picked Course so the closed combobox keeps showing it even if
-	// it came from a live search result outside the `courses` prop, or the
-	// search text changes/clears afterward.
-	const [selectedCourseCache, setSelectedCourseCache] = useState<Course | null>(null);
+	const [selectedCache, setSelectedCache] = useState<User | null>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	// Below 3 characters we filter the (max 50) `courses` prop client-side, same
-	// as before. At 3+ characters we switch to a live server search so courses
-	// beyond that initial cap — or created after it loaded — are still reachable.
 	const isLiveSearch = search.trim().length >= 3;
-	const { results: searchResults } = useCoursesSearch(search);
+	const { results: searchResults } = useUsersSearch(search);
+	// Same instructor/admin predicate applied to both the capped base list and
+	// the live search results, so switching to search never changes who's eligible.
+	const instructorSearchResults = useMemo(
+		() => searchResults.filter(isInstructorCandidate),
+		[searchResults]
+	);
 
-	const filteredCourses = useMemo(() => {
-		if (isLiveSearch) return searchResults;
+	const filteredInstructors = useMemo(() => {
+		if (isLiveSearch) return instructorSearchResults;
 		const q = search.toLowerCase().trim();
-		if (!q) return courses.slice(0, 50); // Show max 50 initially
-		return courses
+		if (!q) return instructors.slice(0, 50);
+		return instructors
 			.filter(
-				(c) =>
-					c.title?.toLowerCase().includes(q) ||
-					c.slug?.toLowerCase().includes(q)
+				(u) =>
+					u.full_name?.toLowerCase().includes(q) ||
+					`${u.first_name} ${u.last_name}`.toLowerCase().includes(q) ||
+					u.email?.toLowerCase().includes(q)
 			)
 			.slice(0, 50);
-	}, [isLiveSearch, searchResults, search, courses]);
+	}, [isLiveSearch, instructorSearchResults, search, instructors]);
 
-	const selectedCourse =
-		selectedCourseCache?.id === value
-			? selectedCourseCache
-			: (courses.find((c) => c.id === value) ?? searchResults.find((c) => c.id === value));
+	const selectedInstructor =
+		selectedCache?.id === value
+			? selectedCache
+			: (instructors.find((u) => u.id === value) ??
+				instructorSearchResults.find((u) => u.id === value));
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -71,11 +85,13 @@ export function CourseCombobox({
 				type="button"
 				onClick={() => !disabled && setIsOpen(!isOpen)}
 				disabled={disabled}
-				className={`${fieldClasses} justify-between items-center text-left ${!selectedCourse ? "text-muted-foreground" : ""}`}
+				className={`${fieldClasses} justify-between items-center text-left ${!selectedInstructor ? "text-muted-foreground" : ""}`}
 			>
-				{selectedCourse ? (
+				{selectedInstructor ? (
 					<span className="truncate">
-						{selectedCourse.title}
+						{selectedInstructor.full_name ||
+							`${selectedInstructor.first_name} ${selectedInstructor.last_name}`}{" "}
+						({selectedInstructor.email})
 					</span>
 				) : (
 					<span className="truncate">{placeholder}</span>
@@ -90,44 +106,45 @@ export function CourseCombobox({
 						<input
 							type="text"
 							className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground h-8"
-							placeholder="Escribe el nombre del curso..."
+							placeholder="Escribe nombre o email..."
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
 							onClick={(e) => e.stopPropagation()}
 							onKeyDown={(e) => {
-								// This input sits inside the surrounding <form> — Enter would
-								// otherwise submit the form before a result is picked.
 								if (e.key === "Enter") e.preventDefault();
 							}}
 							autoFocus
 						/>
 					</div>
 					<div className="max-h-60 overflow-y-auto p-1.5 scrollbar-thin">
-						{filteredCourses.length === 0 ? (
+						{filteredInstructors.length === 0 ? (
 							<div className="p-3 text-center text-sm text-muted-foreground">
-								No se encontraron cursos
+								No se encontraron instructores
 							</div>
 						) : (
-							filteredCourses.map((c) => (
+							filteredInstructors.map((u) => (
 								<button
-									key={c.id}
+									key={u.id}
 									type="button"
 									onClick={() => {
-										onChange(c.id);
-										setSelectedCourseCache(c);
+										onChange(u.id);
+										setSelectedCache(u);
 										setIsOpen(false);
 										setSearch("");
 									}}
 									className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm text-left transition-colors hover:bg-accent hover:text-accent-foreground ${
-										value === c.id ? "bg-primary/10 text-primary font-medium" : ""
+										value === u.id ? "bg-primary/10 text-primary font-medium" : ""
 									}`}
 								>
 									<div className="flex flex-col truncate pr-2">
 										<span className="truncate font-medium text-foreground">
-											{c.title} {c.course_type === "PAID" ? "(Pago)" : "(Gratis)"}
+											{u.full_name || `${u.first_name} ${u.last_name}`}
+										</span>
+										<span className="text-xs text-muted-foreground truncate mt-0.5">
+											{u.email}
 										</span>
 									</div>
-									{value === c.id && <Check className="h-4 w-4 shrink-0" />}
+									{value === u.id && <Check className="h-4 w-4 shrink-0" />}
 								</button>
 							))
 						)}

@@ -144,14 +144,21 @@ export function buildUsersColumns(
 			accessorKey: "is_active",
 			header: "Cuenta",
 			cell: ({ row }) => (
-				<span
-					className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-						row.original.is_active
-							? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-							: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-					}`}>
-					{row.original.is_active ? "Activo" : "Inactivo"}
-				</span>
+				<div className="flex flex-col items-start gap-1">
+					<span
+						className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+							row.original.is_active
+								? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+								: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+						}`}>
+						{row.original.is_active ? "Activo" : "Inactivo"}
+					</span>
+					{row.original.is_claimed === false && (
+						<span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+							Cuenta provisional
+						</span>
+					)}
+				</div>
 			),
 			meta: { className: "hidden lg:table-cell" },
 		},

@@ -57,17 +57,24 @@ export function UserCard({ user, onClick, onManageAccess }: UserCardProps) {
 						</p>
 					</div>
 					
-					{/* Status badge */}
-					<span
-						className={cn(
-							"shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
-							user.is_active
-								? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-								: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+					{/* Status badges */}
+					<div className="flex shrink-0 flex-col items-end gap-1">
+						<span
+							className={cn(
+								"inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+								user.is_active
+									? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+									: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+							)}
+						>
+							{user.is_active ? "Activo" : "Inactivo"}
+						</span>
+						{user.is_claimed === false && (
+							<span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+								Cuenta provisional
+							</span>
 						)}
-					>
-						{user.is_active ? "Activo" : "Inactivo"}
-					</span>
+					</div>
 				</div>
 
 				<div className="flex flex-col gap-2 mt-3 text-xs text-muted-foreground">

@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type { AdminStats, User } from "@/types";
 import type {
   AdminEditProfileInput,
+  CreateProvisionalUserInput,
   UpdateDocumentInput,
   UserCreateInput,
   UserEditInput,
@@ -66,6 +67,14 @@ export const usersService = {
   // ── Public: register new user ─────────────────────────────────────────────
   async create(data: UserCreateInput): Promise<User> {
     const res = await api.post<User>("/users/", data);
+    return res.data;
+  },
+
+  // ── Admin: create a person with no password yet (e.g. to issue a certificate
+  // to someone who never self-registered). Claimed automatically when they
+  // later register with the same document + email.
+  async createProvisional(data: CreateProvisionalUserInput): Promise<User> {
+    const res = await api.post<User>("/users/provisional", data);
     return res.data;
   },
 

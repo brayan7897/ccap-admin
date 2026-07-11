@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { User } from "@/types";
 import type {
   AdminEditProfileInput,
+  CreateProvisionalUserInput,
   ProfileEditInput,
   UpdateDocumentInput,
   UserCreateInput,
@@ -77,6 +78,21 @@ export function useCreateUser() {
     },
     onError: () => {
       toast.error("Error al crear el usuario.");
+    },
+  });
+}
+
+export function useCreateProvisionalUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateProvisionalUserInput) => usersService.createProvisional(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      qc.invalidateQueries({ queryKey: CATALOG_KEY });
+      toast.success("Persona registrada sin cuenta. Ya puedes matricularla y emitirle certificados.");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.detail || "Error al registrar a la persona.");
     },
   });
 }

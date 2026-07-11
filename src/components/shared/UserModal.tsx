@@ -15,6 +15,7 @@ import {
 } from "@/features/users/schemas/user.schema";
 import {
   useCreateUser,
+  useCreateProvisionalUser,
   useActivateUser,
   useChangeUserRole,
   useUpdateUserProfile,
@@ -53,20 +54,30 @@ function CreateUserForm({
 }) {
   const { data: roles, isLoading: isLoadingRoles } = useRoles();
   const createUser = useCreateUser();
+  const createProvisionalUser = useCreateProvisionalUser();
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<UserCreateInput, any, UserCreateInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(userCreateSchema) as any,
-    defaultValues: { document_type: "DNI", is_active: true },
+    defaultValues: { document_type: "DNI", is_active: true, is_provisional: false },
   });
 
+  const isProvisional = watch("is_provisional");
+  const isPending = createUser.isPending || createProvisionalUser.isPending;
+
   function onSubmit(data: UserCreateInput) {
-    createUser.mutate(data, { onSuccess: onClose });
+    if (data.is_provisional) {
+      const { password, is_provisional, is_active, ...payload } = data;
+      createProvisionalUser.mutate(payload, { onSuccess: onClose });
+    } else {
+      createUser.mutate(data, { onSuccess: onClose });
+    }
   }
 
   return (
@@ -136,6 +147,23 @@ function CreateUserForm({
           Credenciales y Acceso
         </h3>
 
+        <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-3">
+          <input
+            type="checkbox"
+            id="create_is_provisional"
+            {...register("is_provisional")}
+            className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+          />
+          <label htmlFor="create_is_provisional" className="text-sm">
+            <span className="font-medium">Esta persona aún no tiene cuenta</span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              Créala sin contraseña para poder matricularla y emitirle un certificado.
+              La cuenta quedará como "provisional" y se activará sola cuando la
+              persona se registre con el mismo documento y correo.
+            </span>
+          </label>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Email *</label>
@@ -150,18 +178,20 @@ function CreateUserForm({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Contraseña *</label>
-            <input
-              {...register("password")}
-              type="password"
-              placeholder="Mínimo 8 caracteres"
-              className={FIELD}
-            />
-            {errors.password && (
-              <p className="text-xs text-destructive">{errors.password.message}</p>
-            )}
-          </div>
+          {!isProvisional && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Contraseña *</label>
+              <input
+                {...register("password")}
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                className={FIELD}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -180,26 +210,28 @@ function CreateUserForm({
             </select>
           </div>
 
-          <div className="flex items-center gap-2 pt-8">
-            <input
-              type="checkbox"
-              id="create_is_active"
-              {...register("is_active")}
-              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-            />
-            <label htmlFor="create_is_active" className="text-sm font-medium">
-              Cuenta activa
-            </label>
-          </div>
+          {!isProvisional && (
+            <div className="flex items-center gap-2 pt-8">
+              <input
+                type="checkbox"
+                id="create_is_active"
+                {...register("is_active")}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <label htmlFor="create_is_active" className="text-sm font-medium">
+                Cuenta activa
+              </label>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="pt-2">
         <button
           type="submit"
-          disabled={createUser.isPending}
+          disabled={isPending}
           className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-          {createUser.isPending ? "Creando…" : "Crear usuario"}
+          {isPending ? "Creando…" : isProvisional ? "Crear persona sin cuenta" : "Crear usuario"}
         </button>
       </div>
     </form>
@@ -485,6 +517,21 @@ function EditAccessTab({ user, onClose, onResetPassword }: { user: User; onClose
 
   return (
     <div className="space-y-4">
+      {/* Provisional account notice */}
+      {user.is_claimed === false && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+            Cuenta provisional
+          </p>
+          <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+            Esta persona todavía no tiene contraseña ni puede iniciar sesión — el
+            registro se creó solo para matricularla y emitirle un certificado. Se
+            activará sola en cuanto se registre con el mismo documento y correo
+            ({user.email}), o puedes asignarle una contraseña manualmente abajo.
+          </p>
+        </div>
+      )}
+
       {/* Course access status (read-only, managed via AccessModal) */}
       <div className="rounded-lg border border-border bg-card p-4 space-y-2">
         <p className="text-sm font-medium">Acceso al catálogo de cursos</p>
