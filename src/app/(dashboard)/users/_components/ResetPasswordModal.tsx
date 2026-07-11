@@ -75,6 +75,17 @@ export function ResetPasswordModal({ user, isOpen, onClose }: ResetPasswordModal
 								Establece una nueva contraseña para <strong>{user.email}</strong>.
 							</p>
 
+							{user.auth_provider === "google" && (
+								<div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
+									<p className="text-xs text-amber-700 dark:text-amber-400">
+										Este usuario inició sesión con <strong>Google</strong> y no
+										tiene contraseña local. Si continúas, se le habilitará
+										también el inicio de sesión con email y contraseña además
+										de Google.
+									</p>
+								</div>
+							)}
+
 							<div className="space-y-3">
 								<div>
 									<label className="text-xs font-medium text-foreground mb-1 block">

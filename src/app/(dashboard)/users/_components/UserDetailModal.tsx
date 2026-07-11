@@ -22,6 +22,12 @@ const ACCESS_LABEL: Record<string, string> = {
 	REJECTED: "Rechazado",
 };
 
+const AUTH_PROVIDER_LABEL: Record<string, string> = {
+	google: "Google",
+	local: "Email/contraseña",
+	pending: "Sin acceso aún",
+};
+
 export function UserDetailModal({
 	user,
 	isOpen,
@@ -77,6 +83,12 @@ export function UserDetailModal({
 							<span className="text-sm font-medium text-muted-foreground">Rol</span>
 							<span className="text-sm font-semibold">{user.role?.name ?? user.role_name ?? "—"}</span>
 						</div>
+						{user.auth_provider && (
+							<div className="flex-1 rounded-lg border border-border p-3 flex items-center justify-between bg-card">
+								<span className="text-sm font-medium text-muted-foreground">Acceso vía</span>
+								<span className="text-sm font-semibold">{AUTH_PROVIDER_LABEL[user.auth_provider]}</span>
+							</div>
+						)}
 					</div>
 
 					{/* Details Grid */}

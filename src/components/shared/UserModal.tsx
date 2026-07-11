@@ -592,7 +592,9 @@ function EditAccessTab({ user, onClose, onResetPassword }: { user: User; onClose
             <div>
               <p className="text-sm font-medium">Contraseña</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Forzar el cambio de contraseña del usuario.
+                {user.auth_provider === "google"
+                  ? "Este usuario inicia sesión con Google (sin contraseña local)."
+                  : "Forzar el cambio de contraseña del usuario."}
               </p>
             </div>
             <button

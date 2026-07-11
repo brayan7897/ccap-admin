@@ -80,7 +80,7 @@ export function UsersPageClient() {
 				(id) => {
 					if (
 						window.confirm(
-							"¿Eliminar este usuario? Esta acción no se puede deshacer.",
+							"¿Eliminar este usuario? Se desactivará su cuenta y perderá acceso a la plataforma; su historial (matrículas, certificados) se conserva.",
 						)
 					) {
 						deleteUser.mutate(id);
@@ -102,7 +102,11 @@ export function UsersPageClient() {
 	}
 
 	function handleDeleteUser(id: string) {
-		if (window.confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) {
+		if (
+			window.confirm(
+				"¿Eliminar este usuario? Se desactivará su cuenta y perderá acceso a la plataforma; su historial (matrículas, certificados) se conserva.",
+			)
+		) {
 			deleteUser.mutate(id);
 		}
 	}

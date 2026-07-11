@@ -2,7 +2,42 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { CourseAccess, User } from "@/types";
-import { Pencil, Trash2, ShieldAlert, ShieldCheck, Shield, ShieldX } from "lucide-react";
+import { Pencil, Trash2, ShieldAlert, ShieldCheck, Shield, ShieldX, Chrome, KeyRound } from "lucide-react";
+
+const AUTH_PROVIDER_BADGE: Record<
+	NonNullable<User["auth_provider"]>,
+	{ label: string; className: string; icon: typeof Chrome }
+> = {
+	google: {
+		label: "Google",
+		className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+		icon: Chrome,
+	},
+	local: {
+		label: "Manual",
+		className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+		icon: KeyRound,
+	},
+	pending: {
+		label: "Sin acceso aún",
+		className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+		icon: KeyRound,
+	},
+};
+
+/** Shows how the user signed up: Google OAuth vs. email/password */
+function AuthProviderBadge({ user }: { user: User }) {
+	if (!user.auth_provider) return null;
+	const badge = AUTH_PROVIDER_BADGE[user.auth_provider];
+	const Icon = badge.icon;
+	return (
+		<span
+			className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${badge.className}`}>
+			<Icon className="h-3 w-3" />
+			{badge.label}
+		</span>
+	);
+}
 
 const ACCESS_BADGE: Record<CourseAccess, { label: string; className: string }> =
 	{
@@ -125,6 +160,12 @@ export function buildUsersColumns(
 		{
 			accessorKey: "email",
 			header: "Email",
+			cell: ({ row }) => (
+				<div className="flex flex-col items-start gap-1">
+					<span>{row.original.email}</span>
+					<AuthProviderBadge user={row.original} />
+				</div>
+			),
 		},
 		{
 			accessorKey: "role",

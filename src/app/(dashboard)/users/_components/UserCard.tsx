@@ -4,6 +4,12 @@ import type { CourseAccess, User } from "@/types";
 import { Shield, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const AUTH_PROVIDER_LABEL: Record<NonNullable<User["auth_provider"]>, string> = {
+	google: "Google",
+	local: "Manual (email/contraseña)",
+	pending: "Sin acceso aún",
+};
+
 const ACCESS_BADGE: Record<CourseAccess, { label: string; className: string }> = {
 	NONE: {
 		label: "Sin acceso",
@@ -86,7 +92,13 @@ export function UserCard({ user, onClick, onManageAccess }: UserCardProps) {
 						<span className="font-medium text-foreground">Rol:</span>
 						{user.role?.name ?? user.role_name ?? "—"}
 					</p>
-					
+					{user.auth_provider && (
+						<p className="flex items-center gap-1.5">
+							<span className="font-medium text-foreground">Método:</span>
+							{AUTH_PROVIDER_LABEL[user.auth_provider]}
+						</p>
+					)}
+
 					<div className="flex items-center gap-2 mt-1">
 						<span className="font-medium text-foreground">Acceso:</span>
 						<button 

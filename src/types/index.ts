@@ -54,6 +54,8 @@ export interface User {
   is_active: boolean;
   /** False = admin-created "provisional" record with no password/login yet. */
   is_claimed?: boolean;
+  /** How this account authenticates: signed up with Google, has a local password, or neither yet. */
+  auth_provider?: "google" | "local" | "pending";
   course_access: CourseAccess;
   permissions?: string[];
   created_at: string;
