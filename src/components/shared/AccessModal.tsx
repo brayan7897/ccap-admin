@@ -58,13 +58,9 @@ export function AccessModal({
 
 	return (
 		<Portal>
-			<div
-				className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-				onClick={onClose}>
-			<div
-				className="w-full max-w-sm rounded-2xl border border-border bg-background shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden"
-				onClick={(e) => e.stopPropagation()}>
-				
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+			<div className="w-full max-w-sm rounded-2xl border border-border bg-background shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-border bg-muted/30 px-5 py-4">
 					<div className="flex items-center gap-2.5">

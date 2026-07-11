@@ -71,11 +71,7 @@ export function CertificateModal({
 
 	return (
 		<Portal>
-			<div
-				className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-				onClick={(e) => {
-					if (e.target === e.currentTarget) handleClose();
-				}}>
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
 			<div className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-border px-6 py-4">
