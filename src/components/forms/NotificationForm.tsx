@@ -9,6 +9,7 @@ import {
 	type NotificationInput,
 } from "@/features/notifications/schemas/notification.schema";
 import type { User } from "@/types";
+import { useUsersSearch } from "@/hooks/useCatalog";
 
 const NOTIFICATION_TYPES = [
 	{ value: "SYSTEM", label: "Sistema" },
@@ -47,13 +48,20 @@ export function NotificationForm({
 	const field =
 		"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
-	const filteredUsers = users.filter((u) => {
-		const name = (
-			u.full_name || `${u.first_name} ${u.last_name}`
-		).toLowerCase();
-		const q = userSearch.toLowerCase();
-		return name.includes(q) || u.email.toLowerCase().includes(q);
-	});
+	// `users` is capped to the first page from the caller — once the org has
+	// more users than that cap, switch to a live server search (same fix as
+	// UserCombobox) instead of only ever filtering that frozen, capped list.
+	const isLiveSearch = userSearch.trim().length >= 3;
+	const { results: searchResults } = useUsersSearch(userSearch);
+	const filteredUsers = isLiveSearch
+		? searchResults
+		: users.filter((u) => {
+				const name = (
+					u.full_name || `${u.first_name} ${u.last_name}`
+				).toLowerCase();
+				const q = userSearch.toLowerCase();
+				return name.includes(q) || u.email.toLowerCase().includes(q);
+			});
 
 	function toggleUser(id: string) {
 		setSelectedIds((prev) =>

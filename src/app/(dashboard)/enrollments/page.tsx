@@ -26,7 +26,15 @@ const STATUS_OPTIONS: { value: EnrollmentStatus | "ALL"; label: string }[] = [
 ];
 
 export default function EnrollmentsPage() {
-	const { data, isLoading, isError } = useEnrollments(0, 200);
+	// Server-side pagination (same pattern as CoursesPage) — the list was
+	// previously hardcoded to the first 200 enrollments with no way to reach
+	// anything past that, and the "N registros en total" footer showed that
+	// capped count as if it were the true total.
+	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 200 });
+	const { data, isLoading, isError } = useEnrollments(
+		pagination.pageIndex * pagination.pageSize,
+		pagination.pageSize,
+	);
 	const cancelEnrollment = useCancelEnrollment();
 
 	const { users } = useUsersCatalog();
@@ -136,8 +144,12 @@ export default function EnrollmentsPage() {
 						<DataTable
 							columns={columns}
 							data={filteredData}
+							rowCount={data?.length ?? 0}
 							searchPlaceholder="Buscar en resultados..."
 							hideSearch
+							manualPagination
+							pagination={pagination}
+							onPaginationChange={setPagination}
 							onRowClick={setSelectedViewEnrollment}
 						/>
 					</div>

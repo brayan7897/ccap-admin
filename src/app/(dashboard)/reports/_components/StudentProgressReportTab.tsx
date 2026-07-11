@@ -22,11 +22,15 @@ export function StudentProgressReportTab() {
 	const [courseId, setCourseId] = useState("ALL");
 	const [status, setStatus] = useState<EnrollmentStatus | "ALL">("ALL");
 
+	// limit matches the backend's max (le=200) — was hardcoded at 50, silently
+	// truncating "Exportar PDF" to the first 50 rows of what's meant to be a
+	// complete report. Still caps at 200 for orgs with more rows than that;
+	// a true "export everything" would need to page through results.
 	const { data, isLoading, isError } = useStudentProgressReport({
 		course_id: courseId !== "ALL" ? courseId : undefined,
 		status: status !== "ALL" ? status : undefined,
 		skip: 0,
-		limit: 50,
+		limit: 200,
 	});
 
 	const columns = useMemo(() => buildStudentProgressReportColumns(), []);

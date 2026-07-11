@@ -14,12 +14,14 @@ export function CertificatesReportTab() {
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 
+	// limit matches the backend's max (le=200) — see StudentProgressReportTab
+	// for why this was bumped from 50.
 	const { data, isLoading, isError } = useCertificatesReport({
 		course_id: courseId !== "ALL" ? courseId : undefined,
 		start_date: startDate || undefined,
 		end_date: endDate || undefined,
 		skip: 0,
-		limit: 50,
+		limit: 200,
 	});
 
 	const columns = useMemo(() => buildCertificatesReportColumns(), []);

@@ -13,9 +13,6 @@ import type { Certificate, User, Course } from "@/types";
 import { Link as LinkIcon, Code } from "lucide-react";
 import { UserCombobox } from "@/components/shared/UserCombobox";
 import { CourseCombobox } from "@/components/shared/CourseCombobox";
-import { useDataStore } from "@/store/data-store";
-import { useEnrollmentStats } from "@/features/enrollments/hooks/useEnrollments";
-import { toast } from "sonner";
 
 interface CertificateFormProps {
 	mode: "create" | "edit";
@@ -69,24 +66,12 @@ export function CertificateForm({
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const selectedUserId = watch("user_id" as any);
 
-	const { enrollments } = useDataStore();
-	useEnrollmentStats();
-
+	// The backend is the single source of truth for enrollment eligibility
+	// (StudentMissingRequirementsError, surfaced via useCreateCertificate's
+	// onError) — no client-side pre-check here, since it used to read from a
+	// store snapshot that goes stale as soon as this session's data changes and
+	// produced false "not enrolled" positives right after enrolling someone.
 	const handleFormSubmit = (data: CertificateCreateInput | CertificateEditInput) => {
-		if (mode === "create") {
-			const createData = data as CertificateCreateInput;
-			const isEnrolled = enrollments.some(
-				(e) =>
-					e.user_id === createData.user_id &&
-					e.course_id === createData.course_id &&
-					e.status !== "CANCELLED"
-			);
-
-			if (!isEnrolled) {
-				toast.error("El estudiante no está matriculado en este curso.");
-				return;
-			}
-		}
 		onSubmit(data);
 	};
 

@@ -40,7 +40,9 @@ export function useCreateCertificate() {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       toast.success("Certificado creado con éxito.");
     },
-    onError: () => toast.error("Error al crear el certificado."),
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.detail || "Error al crear el certificado.");
+    },
   });
 }
 

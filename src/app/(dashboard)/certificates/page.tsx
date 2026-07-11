@@ -16,7 +16,15 @@ import { CertificateCard } from "./_components/CertificateCard";
 import { CertificateDetailModal } from "./_components/CertificateDetailModal";
 
 export default function CertificatesPage() {
-	const { data, isLoading, isError } = useCertificates();
+	// Server-side pagination (same pattern as CoursesPage) — the list was
+	// previously hardcoded to the first 50 certificates ever issued with no way
+	// to reach anything past that, and the "N registros en total" footer showed
+	// that capped count as if it were the true total.
+	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
+	const { data, isLoading, isError } = useCertificates(
+		pagination.pageIndex * pagination.pageSize,
+		pagination.pageSize,
+	);
 	const deleteCertificate = useDeleteCertificate();
 	const { users } = useUsersCatalog();
 	const { courses } = useCoursesCatalog();
@@ -118,8 +126,12 @@ export default function CertificatesPage() {
 						<DataTable
 							columns={columns}
 							data={filteredData}
+							rowCount={data?.length ?? 0}
 							searchPlaceholder="Buscar certificados…"
 							hideSearch
+							manualPagination
+							pagination={pagination}
+							onPaginationChange={setPagination}
 							onRowClick={setViewingCert}
 						/>
 					</div>

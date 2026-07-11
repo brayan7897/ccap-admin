@@ -12,10 +12,12 @@ export function ActivityReportTab() {
 	const { data: roles } = useRoles();
 	const [roleId, setRoleId] = useState("ALL");
 
+	// limit matches the backend's max (le=200) — see StudentProgressReportTab
+	// for why this was bumped from 50.
 	const { data, isLoading, isError } = useActivityReport({
 		role_id: roleId !== "ALL" ? roleId : undefined,
 		skip: 0,
-		limit: 50,
+		limit: 200,
 	});
 
 	const columns = useMemo(() => buildActivityReportColumns(), []);
