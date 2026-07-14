@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
 import type { User } from "@/types";
 import { useUsersSearch } from "@/hooks/useCatalog";
+import { useUser } from "@/features/users/hooks/useUsers";
 
 interface InstructorComboboxProps {
 	value: string;
@@ -63,11 +64,18 @@ export function InstructorCombobox({
 			.slice(0, 50);
 	}, [isLiveSearch, instructorSearchResults, search, instructors]);
 
-	const selectedInstructor =
+	const localMatch =
 		selectedCache?.id === value
 			? selectedCache
 			: (instructors.find((u) => u.id === value) ??
 				instructorSearchResults.find((u) => u.id === value));
+
+	// The `instructors` prop is a capped list (first 50 users) — an existing
+	// course's assigned instructor may fall outside that cap, which used to
+	// show a blank placeholder instead of their name. Fetch them directly by
+	// id as a fallback so the combobox always displays who's actually assigned.
+	const { data: fetchedInstructor } = useUser(!localMatch && value ? value : "");
+	const selectedInstructor = localMatch ?? fetchedInstructor ?? undefined;
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
