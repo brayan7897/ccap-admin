@@ -153,8 +153,8 @@ export function CourseForm({
 		>
 			<div className="lg:col-span-2 space-y-6">
 				{/* ── SECCIÓN: INFORMACIÓN PRINCIPAL ── */}
-				<div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-					<div className="border-b border-border bg-muted/40 px-6 py-4">
+				<div className="rounded-xl border border-border bg-card shadow-sm">
+					<div className="rounded-t-xl border-b border-border bg-muted/40 px-6 py-4">
 						<h3 className="text-lg font-medium text-foreground">Información Principal</h3>
 						<p className="text-sm text-muted-foreground mt-1">Detalles básicos e identificadores del curso.</p>
 					</div>
@@ -207,8 +207,16 @@ export function CourseForm({
 				</div>
 
 				{/* ── SECCIÓN: DETALLES ACADÉMICOS ── */}
-				<div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-					<div className="border-b border-border bg-muted/40 px-6 py-4">
+				{/*
+					No `overflow-hidden` here: the Instructor combobox below renders an
+					absolutely-positioned dropdown that needs to escape this card's
+					bounds. Overflow-hidden used to clip it, making the search panel
+					look like it was cut off / floating outside the section. The header
+					below is rounded on its own (`rounded-t-xl`) to match the card's
+					corners instead of relying on the parent clipping it.
+				*/}
+				<div className="rounded-xl border border-border bg-card shadow-sm">
+					<div className="rounded-t-xl border-b border-border bg-muted/40 px-6 py-4">
 						<h3 className="text-lg font-medium text-foreground">Detalles Académicos</h3>
 						<p className="text-sm text-muted-foreground mt-1">Nivel, categoría, precio y asignación.</p>
 					</div>
@@ -280,8 +288,8 @@ export function CourseForm({
 				</div>
 
 				{/* ── SECCIÓN: REQUISITOS Y LOGROS ── */}
-				<div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-					<div className="border-b border-border bg-muted/40 px-6 py-4">
+				<div className="rounded-xl border border-border bg-card shadow-sm">
+					<div className="rounded-t-xl border-b border-border bg-muted/40 px-6 py-4">
 						<h3 className="text-lg font-medium text-foreground">Requisitos y Logros</h3>
 						<p className="text-sm text-muted-foreground mt-1">Define qué se necesita y qué se obtendrá.</p>
 					</div>
@@ -348,8 +356,15 @@ export function CourseForm({
 			</div>
 
 			<div className="space-y-6">
-				{/* ── SECCIÓN: PUBLICACIÓN Y ACCIONES ── */}
-				<div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden sticky top-6">
+				{/*
+					── SECCIÓN: PUBLICACIÓN Y ACCIONES ──
+					Was `sticky top-6`: since this card sits above the (taller, non-sticky)
+					Multimedia/Etiquetas cards in the same column, pinning it while its own
+					flow position kept scrolling caused those cards to visually slide up
+					and overlap it once the page was scrolled far enough — the "parts
+					merging" glitch. Plain flow avoids that entirely.
+				*/}
+				<div className="rounded-xl border border-border bg-card shadow-sm">
 					<div className="p-6 space-y-6">
 						<div>
 							<h3 className="text-lg font-medium text-foreground mb-4">Estado del Curso</h3>
@@ -419,8 +434,8 @@ export function CourseForm({
 				</div>
 
 				{/* ── SECCIÓN: MULTIMEDIA ── */}
-				<div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-					<div className="border-b border-border bg-muted/40 px-6 py-4">
+				<div className="rounded-xl border border-border bg-card shadow-sm">
+					<div className="rounded-t-xl border-b border-border bg-muted/40 px-6 py-4">
 						<h3 className="text-base font-medium text-foreground">Multimedia</h3>
 					</div>
 					<div className="p-6 space-y-4">
@@ -473,8 +488,8 @@ export function CourseForm({
 				</div>
 
 				{/* ── SECCIÓN: ETIQUETAS ── */}
-				<div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-					<div className="border-b border-border bg-muted/40 px-6 py-4">
+				<div className="rounded-xl border border-border bg-card shadow-sm">
+					<div className="rounded-t-xl border-b border-border bg-muted/40 px-6 py-4">
 						<h3 className="text-base font-medium text-foreground">Etiquetas</h3>
 					</div>
 					<div className="p-6">
