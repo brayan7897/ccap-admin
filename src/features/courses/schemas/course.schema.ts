@@ -10,11 +10,13 @@ export const courseSchema = z
     thumbnail_url: z.string().url("URL inválida").optional().or(z.literal("")),
     short_description: z.string().optional(),
     description: z.string().optional(),
-    course_level: z.enum(["BASIC", "INTERMEDIATE", "ADVANCED"]),
+    // Optional: the API defaults an omitted level to BASIC.
+    course_level: z.enum(["BASIC", "INTERMEDIATE", "ADVANCED"]).optional().or(z.literal("")),
     course_type: z.enum(["FREE", "PAID"]).default("FREE"),
     price: z.coerce.number().positive("El precio debe ser mayor a 0").nullable().optional(),
     category_id: z.string().uuid("Categoría inválida").optional().or(z.literal("")),
-    instructor_id: z.string().uuid("Instructor inválido"),
+    // Optional: the API defaults an omitted instructor to whoever creates the course.
+    instructor_id: z.string().uuid("Instructor inválido").optional().or(z.literal("")),
     requirements: z.array(z.string()),
     what_you_will_learn: z.array(z.string()),
     tags: z.array(z.string()),

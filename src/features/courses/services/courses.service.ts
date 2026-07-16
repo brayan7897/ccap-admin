@@ -22,12 +22,18 @@ type ApiCourseRecord = Course & {
 
 /** Convert empty strings to null/undefined so the API receives clean data. */
 function cleanCoursePayload(data: Partial<CourseInput>): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
     ...data,
     category_id: data.category_id || null,
     thumbnail_url: data.thumbnail_url || null,
     price: data.price ?? null,
   };
+  // Both are optional in the UI — the API fills sensible defaults (level ->
+  // BASIC, instructor -> whoever creates the course) when omitted, but an
+  // empty string fails its UUID/enum validation, so drop the key entirely.
+  if (!data.instructor_id) delete payload.instructor_id;
+  if (!data.course_level) delete payload.course_level;
+  return payload;
 }
 
 export const coursesService = {

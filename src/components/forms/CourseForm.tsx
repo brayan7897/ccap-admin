@@ -223,8 +223,9 @@ export function CourseForm({
 					<div className="p-6 space-y-5">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 							<div>
-								<label className={lbl}>Nivel *</label>
+								<label className={lbl}>Nivel <span className="font-normal text-muted-foreground">(opcional)</span></label>
 								<select {...register("course_level")} className={getFieldClass(!!errors.course_level)}>
+									<option value="">— Por defecto (Básico) —</option>
 									{LEVELS.map((l) => (
 										<option key={l.value} value={l.value}>
 											{l.label}
@@ -263,11 +264,12 @@ export function CourseForm({
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 							<div>
-								<label className={lbl}>Instructor *</label>
+								<label className={lbl}>Instructor <span className="font-normal text-muted-foreground">(opcional)</span></label>
 								<InstructorCombobox
 									instructors={instructors.length > 0 ? instructors : (users ?? [])}
 									value={instructorId || ""}
 									onChange={(val) => setValue("instructor_id", val, { shouldValidate: true })}
+									placeholder="Sin asignar — quedará a tu nombre"
 								/>
 								{errors.instructor_id && <p className={err}><AlertCircle className="h-3.5 w-3.5" />{errors.instructor_id.message}</p>}
 							</div>
