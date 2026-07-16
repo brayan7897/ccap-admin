@@ -49,6 +49,10 @@ export function CertificateModal({
 				if (!payload.issued_at) {
 					delete payload.issued_at;
 				}
+				if (!payload.use_manual_code || !payload.certificate_code) {
+					delete payload.certificate_code;
+				}
+				delete payload.use_manual_code;
 				await certificatesService.create(payload as CertificateCreateInput);
 				toast.success("Certificado creado exitosamente.");
 			} else {
@@ -58,11 +62,12 @@ export function CertificateModal({
 
 			qc.invalidateQueries({ queryKey: ["certificates"] });
 			handleClose();
-		} catch {
+		} catch (error: any) {
 			toast.error(
-				isEditing
-					? "Error al actualizar el certificado."
-					: "Error al crear el certificado.",
+				error?.response?.data?.detail ||
+					(isEditing
+						? "Error al actualizar el certificado."
+						: "Error al crear el certificado."),
 			);
 		} finally {
 			setIsPending(false);

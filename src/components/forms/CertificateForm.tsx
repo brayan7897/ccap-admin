@@ -57,6 +57,8 @@ export function CertificateForm({
 						pdf_url: "",
 						html_content: "",
 						issued_at: "",
+						use_manual_code: false,
+						certificate_code: "",
 					},
 	});
 
@@ -65,6 +67,8 @@ export function CertificateForm({
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const selectedUserId = watch("user_id" as any);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const useManualCode = watch("use_manual_code" as any);
 
 	// The backend is the single source of truth for enrollment eligibility
 	// (StudentMissingRequirementsError, surfaced via useCreateCertificate's
@@ -130,6 +134,44 @@ export function CertificateForm({
 						<p className="text-xs text-muted-foreground mt-1.5">
 							Si no especificas una fecha, se usará el momento actual. Puedes elegir una fecha pasada si el certificado fue emitido antes.
 						</p>
+					</div>
+
+					<div className="space-y-1.5">
+						<label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+							<input
+								type="checkbox"
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								{...register("use_manual_code" as any)}
+								className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+							/>
+							Agregar código de certificado manualmente
+						</label>
+						<p className="text-xs text-muted-foreground">
+							Por defecto se genera un código único automáticamente
+							(CCAP-XXXX-XXXX). Actívalo solo si necesitas asignar un código
+							específico, por ejemplo al migrar un certificado emitido fuera
+							de la plataforma.
+						</p>
+
+						{useManualCode && (
+							<div className="pt-1">
+								<input
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
+									{...register("certificate_code" as any)}
+									placeholder="Ej: CCAP-2026-A010"
+									className={`${field} uppercase`}
+								/>
+								{"certificate_code" in errors && errors.certificate_code && (
+									<p className="text-xs text-destructive mt-1">
+										{(errors.certificate_code as { message?: string }).message}
+									</p>
+								)}
+								<p className="text-xs text-muted-foreground mt-1.5">
+									Debe ser único — si ya existe otro certificado con este
+									código, la API rechazará el envío.
+								</p>
+							</div>
+						)}
 					</div>
 				</div>
 			)}
