@@ -56,7 +56,11 @@ export function CertificateModal({
 				await certificatesService.create(payload as CertificateCreateInput);
 				toast.success("Certificado creado exitosamente.");
 			} else {
-				await certificatesService.update(certificate.id, data as CertificateEditInput);
+				const payload = { ...data } as Record<string, any>;
+				if (!payload.certificate_code) {
+					delete payload.certificate_code;
+				}
+				await certificatesService.update(certificate.id, payload as CertificateEditInput);
 				toast.success("Certificado actualizado exitosamente.");
 			}
 

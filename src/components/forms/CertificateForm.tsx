@@ -10,7 +10,7 @@ import {
 	type CertificateEditInput,
 } from "@/features/certificates/schemas/certificate.schema";
 import type { Certificate, User, Course } from "@/types";
-import { Link as LinkIcon, Code } from "lucide-react";
+import { Link as LinkIcon, Code, Lock } from "lucide-react";
 import { UserCombobox } from "@/components/shared/UserCombobox";
 import { CourseCombobox } from "@/components/shared/CourseCombobox";
 
@@ -49,6 +49,7 @@ export function CertificateForm({
 						drive_file_id: defaultValues.drive_file_id ?? "",
 						pdf_url: defaultValues.pdf_url ?? "",
 						html_content: defaultValues.html_content ?? "",
+						certificate_code: defaultValues.certificate_code ?? "",
 					}
 				: {
 						user_id: "",
@@ -172,6 +173,69 @@ export function CertificateForm({
 								</p>
 							</div>
 						)}
+					</div>
+				</div>
+			)}
+
+			{mode === "edit" && defaultValues && (
+				<div className="space-y-4 rounded-xl border border-border bg-muted/10 p-5">
+					<h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+						<div className="p-1.5 rounded-md bg-primary/10 text-primary">
+							<Lock className="h-3.5 w-3.5" />
+						</div>
+						Identidad del Certificado
+					</h3>
+
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+						<div>
+							<p className="text-xs text-muted-foreground">Estudiante</p>
+							<p className="font-medium text-foreground">
+								{defaultValues.user_full_name || "—"}
+							</p>
+						</div>
+						<div>
+							<p className="text-xs text-muted-foreground">Curso</p>
+							<p className="font-medium text-foreground">
+								{defaultValues.course_title || "—"}
+							</p>
+						</div>
+						<div>
+							<p className="text-xs text-muted-foreground">Fecha de Emisión</p>
+							<p className="font-medium text-foreground">
+								{defaultValues.issued_at
+									? new Date(defaultValues.issued_at).toLocaleDateString("es-PE", {
+											day: "2-digit",
+											month: "short",
+											year: "numeric",
+										})
+									: "—"}
+							</p>
+						</div>
+					</div>
+					<p className="text-xs text-muted-foreground">
+						Estos datos no se pueden modificar. Para reasignar este certificado a
+						otro estudiante o curso, elimínalo y crea uno nuevo.
+					</p>
+
+					<div className="h-px w-full bg-border" />
+
+					<div className="space-y-1.5">
+						<label className="text-sm font-medium">Código de Certificado</label>
+						<input
+							{...register("certificate_code")}
+							placeholder="Ej: CCAP-2026-A010"
+							className={`${field} uppercase`}
+						/>
+						{"certificate_code" in errors && errors.certificate_code && (
+							<p className="text-xs text-destructive mt-1">
+								{(errors.certificate_code as { message?: string }).message}
+							</p>
+						)}
+						<p className="text-xs text-muted-foreground mt-1.5">
+							Corrige errores de tipeo en el código. Debe ser único — si ya
+							existe otro certificado con este código, la API rechazará el
+							envío.
+						</p>
 					</div>
 				</div>
 			)}
