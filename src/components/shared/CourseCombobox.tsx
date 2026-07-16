@@ -13,6 +13,11 @@ interface CourseComboboxProps {
 	placeholder?: string;
 }
 
+const STATUS_LABEL: Record<string, string> = {
+	draft: "Borrador",
+	archived: "Archivado",
+};
+
 export function CourseCombobox({
 	value,
 	onChange,
@@ -74,8 +79,13 @@ export function CourseCombobox({
 				className={`${fieldClasses} justify-between items-center text-left ${!selectedCourse ? "text-muted-foreground" : ""}`}
 			>
 				{selectedCourse ? (
-					<span className="truncate">
+					<span className="truncate flex items-center gap-1.5">
 						{selectedCourse.title}
+						{STATUS_LABEL[selectedCourse.status] && (
+							<span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+								{STATUS_LABEL[selectedCourse.status]}
+							</span>
+						)}
 					</span>
 				) : (
 					<span className="truncate">{placeholder}</span>
@@ -123,8 +133,13 @@ export function CourseCombobox({
 									}`}
 								>
 									<div className="flex flex-col truncate pr-2">
-										<span className="truncate font-medium text-foreground">
+										<span className="truncate font-medium text-foreground flex items-center gap-1.5">
 											{c.title} {c.course_type === "PAID" ? "(Pago)" : "(Gratis)"}
+											{STATUS_LABEL[c.status] && (
+												<span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+													{STATUS_LABEL[c.status]}
+												</span>
+											)}
 										</span>
 									</div>
 									{value === c.id && <Check className="h-4 w-4 shrink-0" />}

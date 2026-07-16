@@ -23,8 +23,6 @@ export function EnrollmentModal({ isOpen, onClose }: EnrollmentModalProps) {
 
 	if (!isOpen) return null;
 
-	const publishedCourses = courses.filter((c) => c.status === "published");
-
 	function handleClose() {
 		setUserId("");
 		setCourseId("");
@@ -77,15 +75,15 @@ export function EnrollmentModal({ isOpen, onClose }: EnrollmentModalProps) {
 					<div className="space-y-1.5">
 						<label className="text-sm font-medium text-foreground">Curso</label>
 						<CourseCombobox
-							courses={publishedCourses}
+							courses={courses}
 							value={courseId}
 							onChange={setCourseId}
 							disabled={coursesLoading}
 							placeholder={coursesLoading ? "Cargando cursos…" : "Buscar curso..."}
 						/>
 						<p className="text-xs text-muted-foreground">
-							Solo cursos publicados. Para cursos de pago se requiere esta
-							acción de administrador.
+							Incluye cursos no publicados o archivados — como administrador
+							puedes matricular e emitir certificados para ellos igual.
 						</p>
 					</div>
 
