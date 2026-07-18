@@ -61,6 +61,15 @@ export interface User {
   created_at: string;
 }
 
+export interface PendingEmailChange {
+  user_id: string;
+  current_email: string;
+  requested_email: string;
+  first_name: string;
+  last_name: string;
+  requested_at: string;
+}
+
 // ── Category ──────────────────────────────────────────────────────────────────
 export interface Category {
   id: string;

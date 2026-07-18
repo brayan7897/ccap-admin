@@ -13,6 +13,7 @@ interface UserDetailModalProps {
 	onDelete: (id: string) => void;
 	onManageAccess: (user: User) => void;
 	onResetPassword: (user: User) => void;
+	onChangeEmail: (user: User) => void;
 }
 
 const ACCESS_LABEL: Record<string, string> = {
@@ -36,6 +37,7 @@ export function UserDetailModal({
 	onDelete,
 	onManageAccess,
 	onResetPassword,
+	onChangeEmail,
 }: UserDetailModalProps) {
 	if (!isOpen || !user) return null;
 
@@ -179,6 +181,16 @@ export function UserDetailModal({
 					>
 						<KeyRound className="h-4 w-4" />
 						Contraseña
+					</button>
+					<button
+						onClick={() => {
+							onClose();
+							onChangeEmail(user);
+						}}
+						className="inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
+					>
+						<Mail className="h-4 w-4" />
+						Correo
 					</button>
 					<button
 						onClick={() => {

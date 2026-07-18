@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, User as UserIcon, FileText, ShieldCheck, Lock, Unlock, KeyRound } from "lucide-react";
+import { X, User as UserIcon, FileText, ShieldCheck, Lock, Unlock, KeyRound, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "@/types";
@@ -40,6 +40,7 @@ interface UserModalProps {
   onClose: () => void;
   user?: User | null;
   onResetPassword?: (user: User) => void;
+  onChangeEmail?: (user: User) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -498,7 +499,7 @@ function EditDocumentTab({ user, onClose }: { user: User; onClose: () => void })
 
 // ─────────────────────────────────────────────────────────────────────────────
 /** EDIT — Access tab: quick activate/deactivate & course access status */
-function EditAccessTab({ user, onClose, onResetPassword }: { user: User; onClose: () => void; onResetPassword?: (user: User) => void }) {
+function EditAccessTab({ user, onClose, onResetPassword, onChangeEmail }: { user: User; onClose: () => void; onResetPassword?: (user: User) => void; onChangeEmail?: (user: User) => void }) {
   const activateUser = useActivateUser();
 
   const accessLabel: Record<string, string> = {
@@ -585,6 +586,34 @@ function EditAccessTab({ user, onClose, onResetPassword }: { user: User; onClose
         </div>
       </div>
 
+      {/* Email Change */}
+      {onChangeEmail && (
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Correo electrónico</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {user.auth_provider === "google"
+                  ? "Este usuario inicia sesión con Google (correo sincronizado)."
+                  : "Cambia el correo con el que inicia sesión."}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={user.auth_provider === "google"}
+              onClick={() => {
+                onClose();
+                onChangeEmail(user);
+              }}
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:pointer-events-none disabled:opacity-50"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Cambiar correo
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Password Reset */}
       {onResetPassword && (
         <div className="rounded-lg border border-border bg-card p-4">
@@ -619,7 +648,7 @@ function EditAccessTab({ user, onClose, onResetPassword }: { user: User; onClose
 // Main UserModal
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function UserModal({ isOpen, onClose, user, onResetPassword }: UserModalProps) {
+export function UserModal({ isOpen, onClose, user, onResetPassword, onChangeEmail }: UserModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
   if (!isOpen) return null;
@@ -679,7 +708,7 @@ export function UserModal({ isOpen, onClose, user, onResetPassword }: UserModalP
           {isEditing && activeTab === "document" && (
             <EditDocumentTab user={user} onClose={onClose} />
           )}
-          {isEditing && activeTab === "access" && <EditAccessTab user={user} onClose={onClose} onResetPassword={onResetPassword} />}
+          {isEditing && activeTab === "access" && <EditAccessTab user={user} onClose={onClose} onResetPassword={onResetPassword} onChangeEmail={onChangeEmail} />}
         </div>
       </div>
       </div>

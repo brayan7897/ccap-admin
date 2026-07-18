@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { AdminStats, User } from "@/types";
+import type { AdminStats, PendingEmailChange, User } from "@/types";
 import type {
   AdminEditProfileInput,
   CreateProvisionalUserInput,
@@ -166,5 +166,22 @@ export const usersService = {
   async resetPassword(userId: string, new_password: string): Promise<{ detail: string }> {
     const res = await api.patch<{ detail: string }>(`/users/${userId}/password`, { new_password });
     return res.data;
+  },
+
+  // ── Admin: change user email directly ────────────────────────────────────
+  async updateEmail(userId: string, new_email: string): Promise<User> {
+    const res = await api.patch<User>(`/users/${userId}/email`, { new_email });
+    return res.data;
+  },
+
+  // ── Admin: pending email-change requests ─────────────────────────────────
+  async getPendingEmailChanges(): Promise<PendingEmailChange[]> {
+    const res = await api.get<PendingEmailChange[]>("/users/email-change/pending");
+    return res.data;
+  },
+
+  // ── Admin: reject a pending email-change request without applying it ────
+  async rejectEmailChange(userId: string): Promise<void> {
+    await api.delete(`/users/email-change/pending/${userId}`);
   },
 };

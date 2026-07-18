@@ -295,3 +295,45 @@ export function useResetPassword() {
     },
   });
 }
+
+// ── Admin: change user email directly ──────────────────────────────────────────
+
+export function useUpdateEmail() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, new_email }: { userId: string; new_email: string }) =>
+      usersService.updateEmail(userId, new_email),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
+      qc.invalidateQueries({ queryKey: [...QUERY_KEY, "email-changes", "pending"] });
+      toast.success("Correo actualizado. El usuario debe iniciar sesión de nuevo.");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.detail || "Error al cambiar el correo.");
+    },
+  });
+}
+
+// ── Email-change requests ─────────────────────────────────────────────────────
+
+export function usePendingEmailChanges() {
+  return useQuery({
+    queryKey: [...QUERY_KEY, "email-changes", "pending"],
+    queryFn: () => usersService.getPendingEmailChanges(),
+    staleTime: 2 * 60 * 1000, // 2 min
+  });
+}
+
+export function useRejectEmailChange() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersService.rejectEmailChange(userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [...QUERY_KEY, "email-changes", "pending"] });
+      toast.success("Solicitud rechazada.");
+    },
+    onError: () => {
+      toast.error("Error al rechazar la solicitud.");
+    },
+  });
+}

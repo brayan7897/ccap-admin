@@ -20,6 +20,7 @@ import { UserFilters } from "./_components/UserFilters";
 import { UserCard } from "./_components/UserCard";
 import { UserDetailModal } from "./_components/UserDetailModal";
 import { ResetPasswordModal } from "./_components/ResetPasswordModal";
+import { ChangeEmailModal } from "./_components/ChangeEmailModal";
 
 const ACCESS_OPTIONS: { value: CourseAccess | "ALL"; label: string }[] = [
 	{ value: "ALL", label: "Todo el acceso" },
@@ -62,6 +63,7 @@ export function UsersPageClient() {
 
 	const [selectedViewUser, setSelectedViewUser] = useState<User | null>(null);
 	const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+	const [changeEmailUser, setChangeEmailUser] = useState<User | null>(null);
 
 	const filteredData = useMemo(() => {
 		if (!data) return [];
@@ -125,6 +127,11 @@ export function UsersPageClient() {
 						href="/users/password-resets"
 						className="inline-flex items-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border border-border">
 						Solicitudes de contraseña
+					</Link>
+					<Link
+						href="/users/email-changes"
+						className="inline-flex items-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border border-border">
+						Solicitudes de correo
 					</Link>
 					<button
 						onClick={handleOpenCreate}
@@ -196,6 +203,7 @@ export function UsersPageClient() {
 				onClose={handleCloseModal}
 				user={editingUser}
 				onResetPassword={setResetPasswordUser}
+				onChangeEmail={setChangeEmailUser}
 			/>
 			<AccessModal
 				user={accessUser}
@@ -217,11 +225,17 @@ export function UsersPageClient() {
 				onDelete={handleDeleteUser}
 				onManageAccess={setAccessUser}
 				onResetPassword={setResetPasswordUser}
+				onChangeEmail={setChangeEmailUser}
 			/>
 			<ResetPasswordModal
 				user={resetPasswordUser}
 				isOpen={!!resetPasswordUser}
 				onClose={() => setResetPasswordUser(null)}
+			/>
+			<ChangeEmailModal
+				user={changeEmailUser}
+				isOpen={!!changeEmailUser}
+				onClose={() => setChangeEmailUser(null)}
 			/>
 		</div>
 	);
