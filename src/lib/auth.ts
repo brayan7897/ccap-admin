@@ -42,6 +42,13 @@ export const authConfig: NextAuthConfig = {
           });
 
           if (!tokenRes.ok) {
+            // The API now rejects login outright (403) for deactivated
+            // accounts instead of issuing a token and relying on this
+            // callback to notice `is_active: false` afterward — 403 on this
+            // endpoint means exactly that (401 covers bad credentials).
+            if (tokenRes.status === 403) {
+              throw new AuthError("account_inactive");
+            }
             throw new AuthError(`login_failed_${tokenRes.status}`);
           }
 
