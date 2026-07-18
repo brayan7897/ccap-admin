@@ -1,5 +1,43 @@
 import { z } from "zod";
 
+// ── Document number validation per type ────────────────────────────────────────
+// Same rules as ccap-app's registration form, kept in sync so a document that's
+// valid on one side of the platform is valid on the other.
+function validateDocumentNumber(
+  documentType: string,
+  documentNumber: string,
+  ctx: z.RefinementCtx,
+) {
+  if (documentType === "DNI" && !/^\d{8}$/.test(documentNumber)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "El DNI debe tener exactamente 8 dígitos numéricos",
+      path: ["document_number"],
+    });
+  }
+  if (documentType === "CE" && !/^\d{9}$/.test(documentNumber)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "El carné de extranjería debe tener exactamente 9 dígitos numéricos",
+      path: ["document_number"],
+    });
+  }
+  if (documentType === "PASAPORTE" && !/^[A-Z0-9]{6,12}$/i.test(documentNumber)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "El pasaporte debe tener entre 6 y 12 caracteres alfanuméricos",
+      path: ["document_number"],
+    });
+  }
+  if (documentType === "RUC" && !/^(10|15|16|17|20)\d{9}$/.test(documentNumber)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "El RUC debe tener 11 dígitos numéricos y empezar con 10, 15, 16, 17 o 20",
+      path: ["document_number"],
+    });
+  }
+}
+
 // ── Create user (POST /users/ or POST /users/provisional) ─────────────────────
 // `is_provisional` is a client-only flag (never sent to POST /users/provisional,
 // and silently ignored by POST /users/): when on, the person has no account yet
@@ -12,7 +50,7 @@ export const userCreateSchema = z
     is_provisional: z.boolean().default(false),
     first_name: z.string().min(2, "Nombre requerido"),
     last_name: z.string().min(2, "Apellido requerido"),
-    document_type: z.enum(["DNI", "CE", "PASAPORTE"]),
+    document_type: z.enum(["DNI", "CE", "PASAPORTE", "RUC"]),
     document_number: z.string().min(6, "Número de documento requerido"),
     phone_number: z.string().optional(),
     // The native <select> submits "" for the blank/default option — without
@@ -34,6 +72,7 @@ export const userCreateSchema = z
         path: ["password"],
       });
     }
+    validateDocumentNumber(data.document_type, data.document_number, ctx);
   });
 
 /**
@@ -70,14 +109,18 @@ export const adminEditProfileSchema = z.object({
  * Admin: correct a user's document.
  * Maps to PATCH /users/{user_id}/document
  */
-export const updateDocumentSchema = z.object({
-  document_type: z.enum(["DNI", "CE", "PASAPORTE"], {
-    required_error: "Tipo de documento requerido",
-  }),
-  document_number: z
-    .string()
-    .min(6, "El número de documento debe tener al menos 6 caracteres"),
-});
+export const updateDocumentSchema = z
+  .object({
+    document_type: z.enum(["DNI", "CE", "PASAPORTE", "RUC"], {
+      required_error: "Tipo de documento requerido",
+    }),
+    document_number: z
+      .string()
+      .min(6, "El número de documento debe tener al menos 6 caracteres"),
+  })
+  .superRefine((data, ctx) => {
+    validateDocumentNumber(data.document_type, data.document_number, ctx);
+  });
 
 /**
  * Admin: approve or reject course access.
@@ -103,7 +146,7 @@ export const profileEditSchema = z.object({
 export const userEditSchema = z.object({
   first_name: z.string().min(2, "Nombre requerido").optional(),
   last_name: z.string().min(2, "Apellido requerido").optional(),
-  document_type: z.enum(["DNI", "CE", "PASAPORTE"]).optional(),
+  document_type: z.enum(["DNI", "CE", "PASAPORTE", "RUC"]).optional(),
   document_number: z.string().min(6, "Número de documento requerido").optional(),
   phone_number: z.string().optional(),
   role_id: z.string().uuid("ID de rol inválido").optional(),
