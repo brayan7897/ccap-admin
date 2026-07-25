@@ -14,9 +14,7 @@ export default function FeaturedProfessorsPage() {
 	const removeProfessor = useRemoveFeaturedProfessor();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const maxProfessors = 3;
 	const currentCount = data?.length || 0;
-	const canAddMore = currentCount < maxProfessors;
 
 	const handleDelete = async (id: string) => {
 		if (confirm("¿Estás seguro de eliminar a este profesor de los destacados?")) {
@@ -35,13 +33,12 @@ export default function FeaturedProfessorsPage() {
 				<div>
 					<h2 className="text-2xl font-bold tracking-tight">Profesores Destacados</h2>
 					<p className="text-sm text-muted-foreground">
-						Selecciona hasta {maxProfessors} profesores para mostrar en la página principal.
-						({currentCount}/{maxProfessors})
+						Selecciona los profesores para mostrar en la página principal.
+						({currentCount} destacado{currentCount === 1 ? "" : "s"})
 					</p>
 				</div>
 				<button
 					onClick={() => setIsModalOpen(true)}
-					disabled={!canAddMore}
 					className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50">
 					<Plus className="h-4 w-4" />
 					Agregar Profesor
