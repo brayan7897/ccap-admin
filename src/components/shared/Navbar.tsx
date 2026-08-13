@@ -154,7 +154,7 @@ export function Navbar() {
 
 					{/* Logo */}
 					<div className="flex shrink-0 items-center">
-						<Logo className="h-6 sm:h-8" variant={darkMode ? "light" : "default"} />
+						<Logo className="h-8 sm:h-10" variant={darkMode ? "light" : "default"} />
 					</div>
 
 					{/* Separator */}
