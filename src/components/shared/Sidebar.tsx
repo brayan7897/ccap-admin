@@ -228,6 +228,12 @@ export function Sidebar() {
 					<p className="text-[10px] text-sidebar-foreground/40">
 						CCAP GLOBAL S.R.L. © {new Date().getFullYear()}
 					</p>
+					<a
+						href="mailto:brayan79tarazona@gmail.com"
+						className="block text-[9px] text-sidebar-foreground/25 hover:text-sidebar-foreground/50 transition-colors mt-0.5"
+					>
+						Desarrollado por Brayan Tarazona Arratea
+					</a>
 				</div>
 			)}
 		</aside>
