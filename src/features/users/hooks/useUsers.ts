@@ -7,11 +7,12 @@ import type {
   AdminEditProfileInput,
   CreateProvisionalUserInput,
   ProfileEditInput,
+  RegisterUserInput,
   UpdateDocumentInput,
-  UserCreateInput,
 } from "../schemas/user.schema";
 import { usersService } from "../services/users.service";
 import { useDataStore } from "@/store/data-store";
+import { getErrorDetail } from "@/lib/api";
 
 const QUERY_KEY = ["users"] as const;
 const CATALOG_KEY = ["catalog", "users"] as const;
@@ -69,15 +70,15 @@ export function useAdminStats() {
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: UserCreateInput) => usersService.create(data),
+    mutationFn: (data: RegisterUserInput) => usersService.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY, exact: false });
 
       qc.invalidateQueries({ queryKey: CATALOG_KEY });
       toast.success("Usuario creado correctamente.");
     },
-    onError: () => {
-      toast.error("Error al crear el usuario.");
+    onError: (error) => {
+      toast.error(getErrorDetail(error, "Error al crear el usuario."));
     },
   });
 }

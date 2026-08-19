@@ -39,13 +39,22 @@ function validateDocumentNumber(
 }
 
 // ── Create user (POST /users/ or POST /users/provisional) ─────────────────────
-// `is_provisional` is a client-only flag (never sent to POST /users/provisional,
-// and silently ignored by POST /users/): when on, the person has no account yet
-// (e.g. issuing them a certificate without a prior self-registration), so no
-// password is collected and password validation is skipped.
+// `is_provisional` is a client-only flag, never sent to either endpoint: when
+// on, the person has no account yet (e.g. issuing them a certificate without a
+// prior self-registration), so no password is collected and password
+// validation is skipped.
+//
+// `role_id` and `is_active` are also client-only for the non-provisional path:
+// POST /users/ is the SAME public self-registration endpoint, so it never
+// accepted is_active and no longer accepts role_id either (removed there on
+// purpose — see ccap-api's CreateUserRequest docstring). UserModal applies
+// both as separate, already admin-gated follow-up calls after creation
+// instead of sending them in this request.
 export const userCreateSchema = z
   .object({
     email: z.string().email("Email inválido"),
+    // Same policy the backend enforces on every password-setting endpoint
+    // (checked below in superRefine): 8-128 chars, lower + upper + digit.
     password: z.string().optional(),
     is_provisional: z.boolean().default(false),
     first_name: z.string().min(2, "Nombre requerido"),
@@ -65,12 +74,20 @@ export const userCreateSchema = z
     is_active: z.boolean().default(true),
   })
   .superRefine((data, ctx) => {
-    if (!data.is_provisional && (!data.password || data.password.length < 8)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "La contraseña debe tener al menos 8 caracteres",
-        path: ["password"],
-      });
+    if (!data.is_provisional) {
+      if (!data.password || data.password.length < 8) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "La contraseña debe tener al menos 8 caracteres",
+          path: ["password"],
+        });
+      } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.password)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Debe tener mayúsculas, minúsculas y un número",
+          path: ["password"],
+        });
+      }
     }
     validateDocumentNumber(data.document_type, data.document_number, ctx);
   });
@@ -161,6 +178,15 @@ export type UserCreateInput = z.infer<typeof userCreateSchema>;
 export type CreateProvisionalUserInput = Omit<
   UserCreateInput,
   "password" | "is_provisional" | "is_active"
+>;
+/**
+ * Payload actually sent to POST /users/ (no is_provisional/is_active/role_id
+ * — that endpoint never accepted the first two and no longer accepts
+ * role_id; UserModal applies those as separate admin-gated follow-up calls).
+ */
+export type RegisterUserInput = Omit<
+  UserCreateInput,
+  "is_provisional" | "is_active" | "role_id"
 >;
 /** @deprecated */
 export type UserEditInput = z.infer<typeof userEditSchema>;

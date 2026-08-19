@@ -3,8 +3,8 @@ import type { AdminStats, PendingEmailChange, User } from "@/types";
 import type {
   AdminEditProfileInput,
   CreateProvisionalUserInput,
+  RegisterUserInput,
   UpdateDocumentInput,
-  UserCreateInput,
   UserEditInput,
 } from "../schemas/user.schema";
 
@@ -65,7 +65,7 @@ export const usersService = {
   },
 
   // ── Public: register new user ─────────────────────────────────────────────
-  async create(data: UserCreateInput): Promise<User> {
+  async create(data: RegisterUserInput): Promise<User> {
     const res = await api.post<User>("/users/", data);
     return res.data;
   },

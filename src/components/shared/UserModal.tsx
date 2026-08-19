@@ -13,6 +13,7 @@ import {
   type UpdateDocumentInput,
   type UserCreateInput,
 } from "@/features/users/schemas/user.schema";
+import { toast } from "sonner";
 import {
   useCreateUser,
   useCreateProvisionalUser,
@@ -47,7 +48,11 @@ interface UserModalProps {
 // Sub-forms
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** CREATE mode: single form that matches POST /users/ */
+/**
+ * CREATE mode: creates via POST /users/ or POST /users/provisional, then
+ * applies role_id/is_active (when set) as separate admin-gated follow-up
+ * calls — see the comment on userCreateSchema for why.
+ */
 function CreateUserForm({
   onClose,
 }: {
@@ -56,6 +61,8 @@ function CreateUserForm({
   const { data: roles, isLoading: isLoadingRoles } = useRoles();
   const createUser = useCreateUser();
   const createProvisionalUser = useCreateProvisionalUser();
+  const changeRole = useChangeUserRole();
+  const activateUser = useActivateUser();
 
   const {
     register,
@@ -70,14 +77,46 @@ function CreateUserForm({
   });
 
   const isProvisional = watch("is_provisional");
-  const isPending = createUser.isPending || createProvisionalUser.isPending;
+  const isPending =
+    createUser.isPending ||
+    createProvisionalUser.isPending ||
+    changeRole.isPending ||
+    activateUser.isPending;
 
-  function onSubmit(data: UserCreateInput) {
-    if (data.is_provisional) {
-      const { password, is_provisional, is_active, ...payload } = data;
-      createProvisionalUser.mutate(payload, { onSuccess: onClose });
-    } else {
-      createUser.mutate(data, { onSuccess: onClose });
+  async function onSubmit(data: UserCreateInput) {
+    // POST /users/ (createUser) is the SAME public self-registration endpoint,
+    // which only ever accepts email/password/name/document/phone — it never
+    // supported is_active, and no longer accepts role_id (removed there on
+    // purpose: it's unauthenticated, so a client-chosen role would let anyone
+    // self-register as admin). A role/inactive choice made here is applied as
+    // a separate, already admin-gated follow-up call instead — same
+    // multi-request composition EditProfileTab already uses.
+    try {
+      if (data.is_provisional) {
+        const { password: _password, is_provisional: _p, is_active: _a, ...payload } = data;
+        await createProvisionalUser.mutateAsync(payload);
+        onClose();
+        return;
+      }
+
+      const { is_provisional: _p, is_active, role_id, ...payload } = data;
+      const created = await createUser.mutateAsync(payload);
+
+      const followUps: Promise<unknown>[] = [];
+      if (role_id) {
+        followUps.push(changeRole.mutateAsync({ id: created.id, role_id }));
+      }
+      if (is_active === false) {
+        followUps.push(activateUser.mutateAsync({ id: created.id, is_active: false }));
+      }
+      if (followUps.length > 0) {
+        await Promise.allSettled(followUps);
+      }
+      onClose();
+    } catch {
+      // createUser/createProvisionalUser already toast their own error
+      // (with the backend's actual detail message) — nothing more to do here,
+      // just don't close the modal so the admin can fix the field and retry.
     }
   }
 
@@ -185,7 +224,7 @@ function CreateUserForm({
               <input
                 {...register("password")}
                 type="password"
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Mínimo 8 caracteres, mayúscula y número"
                 className={FIELD}
               />
               {errors.password && (

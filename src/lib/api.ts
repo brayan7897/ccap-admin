@@ -68,6 +68,29 @@ api.interceptors.response.use(
 );
 
 /**
+ * Extract a display-friendly message from an axios error, regardless of
+ * which of the two shapes the API's `detail` field comes back as:
+ *   - a plain string, for domain errors raised as HTTPException(detail="...")
+ *   - a pydantic validation-error array (`[{ msg, loc, type, ... }]`), for a
+ *     422 raised by FastAPI itself before the request ever reaches our code
+ *     (e.g. a password that fails the strength check on CreateUserRequest).
+ * Without this, toasting `error.response.data.detail` directly renders the
+ * array case as "[object Object]" instead of the actual validation message.
+ */
+export function getErrorDetail(error: unknown, fallback: string): string {
+  const detail = (error as { response?: { data?: { detail?: unknown } } })?.response?.data
+    ?.detail;
+  if (typeof detail === "string" && detail) return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const messages = detail
+      .map((e) => (typeof e?.msg === "string" ? e.msg.replace(/^Value error,\s*/, "") : null))
+      .filter((m): m is string => !!m);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  return fallback;
+}
+
+/**
  * Calls the backend logout endpoint to revoke the current session in Redis
  * and mark it as inactive in PostgreSQL.
  *
