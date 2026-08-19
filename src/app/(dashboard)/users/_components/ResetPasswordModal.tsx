@@ -25,6 +25,14 @@ export function ResetPasswordModal({ user, isOpen, onClose }: ResetPasswordModal
 	const handleReset = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!newPassword || !confirmPassword) return;
+		if (newPassword.length < 8) {
+			setError("La contraseña debe tener al menos 8 caracteres");
+			return;
+		}
+		if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+			setError("Debe incluir mayúsculas, minúsculas y un número");
+			return;
+		}
 		if (newPassword !== confirmPassword) {
 			setError("Las contraseñas no coinciden");
 			return;
