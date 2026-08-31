@@ -79,7 +79,7 @@ export const usersService = {
   },
 
   // ── Admin: update profile fields of any user ──────────────────────────────
-  // Maps to PUT /admin/users/{id}
+  // Maps to PUT /users/{id}
   // Fields: first_name, last_name, phone_number, bio, avatar_url
   // Role and activation are handled by dedicated endpoints below.
   async updateProfile(userId: string, data: AdminEditProfileInput): Promise<User> {
@@ -91,7 +91,7 @@ export const usersService = {
     if (data.bio !== undefined) profilePayload.bio = data.bio || null;
     if (data.avatar_url !== undefined) profilePayload.avatar_url = data.avatar_url || null;
 
-    const res = await api.put<User>(`/admin/users/${userId}`, profilePayload);
+    const res = await api.put<User>(`/users/${userId}`, profilePayload);
     return res.data;
   },
 
