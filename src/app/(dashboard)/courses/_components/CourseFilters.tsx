@@ -1,61 +1,84 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FilterX } from "lucide-react";
+import { SearchInput } from "@/components/shared/SearchInput";
+import type { CourseStatus, CourseType } from "@/types";
 
 interface CourseFiltersProps {
 	searchQuery: string;
 	onSearchChange: (value: string) => void;
-	statusFilter: string;
-	onStatusChange: (value: string) => void;
-	typeFilter: string;
-	onTypeChange: (value: string) => void;
+	isSearchPending?: boolean;
+	statusFilter: CourseStatus | "all";
+	onStatusChange: (value: CourseStatus | "all") => void;
+	typeFilter: CourseType | "all";
+	onTypeChange: (value: CourseType | "all") => void;
+	onClear: () => void;
 }
+
+const selectClasses =
+	"h-10 cursor-pointer rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function CourseFilters({
 	searchQuery,
 	onSearchChange,
+	isSearchPending = false,
 	statusFilter,
 	onStatusChange,
 	typeFilter,
 	onTypeChange,
+	onClear,
 }: CourseFiltersProps) {
-	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 bg-card p-4 rounded-xl border border-border">
-			{/* Buscador */}
-			<div className="relative w-full sm:max-w-xs">
-				<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-				<input
-					type="text"
-					placeholder="Buscar cursos..."
-					value={searchQuery}
-					onChange={(e) => onSearchChange(e.target.value)}
-					className="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-				/>
-			</div>
+	const hasFilters =
+		searchQuery.trim() !== "" || statusFilter !== "all" || typeFilter !== "all";
 
-			{/* Filtros */}
+	return (
+		<div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+			<SearchInput
+				className="sm:max-w-md"
+				label="Buscar cursos"
+				placeholder="Buscar por título o descripción…"
+				value={searchQuery}
+				onChange={onSearchChange}
+				isPending={isSearchPending}
+			/>
+
 			<div className="flex flex-wrap items-center gap-2">
+				<label className="sr-only" htmlFor="course-status-filter">
+					Filtrar por estado
+				</label>
 				<select
+					id="course-status-filter"
 					value={statusFilter}
-					onChange={(e) => onStatusChange(e.target.value)}
-					className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-				>
+					onChange={(e) => onStatusChange(e.target.value as CourseStatus | "all")}
+					className={selectClasses}>
 					<option value="all">Todos los estados</option>
 					<option value="published">Publicado</option>
 					<option value="draft">Borrador</option>
 					<option value="archived">Archivado</option>
 				</select>
 
+				<label className="sr-only" htmlFor="course-type-filter">
+					Filtrar por tipo
+				</label>
 				<select
+					id="course-type-filter"
 					value={typeFilter}
-					onChange={(e) => onTypeChange(e.target.value)}
-					className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-				>
+					onChange={(e) => onTypeChange(e.target.value as CourseType | "all")}
+					className={selectClasses}>
 					<option value="all">Todos los tipos</option>
-					<option value="free">Gratis</option>
-					<option value="paid">Pago</option>
+					<option value="FREE">Gratis</option>
+					<option value="PAID">Pago</option>
 				</select>
+
+				{hasFilters && (
+					<button
+						type="button"
+						onClick={onClear}
+						className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+						<FilterX aria-hidden="true" className="h-4 w-4" />
+						Limpiar
+					</button>
+				)}
 			</div>
 		</div>
 	);

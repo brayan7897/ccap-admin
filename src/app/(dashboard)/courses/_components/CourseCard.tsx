@@ -115,8 +115,13 @@ export function CourseCard({ course, enrolledCount, onDelete }: CourseCardProps)
 					Editar
 				</Link>
 				<button
-					onClick={() => onDelete(course.id)}
-					className="inline-flex justify-center items-center gap-2 rounded-md bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors"
+					type="button"
+					onClick={() => {
+						if (window.confirm(`¿Eliminar el curso "${course.title}"? Esta acción no se puede deshacer.`)) {
+							onDelete(course.id);
+						}
+					}}
+					className="inline-flex justify-center items-center gap-2 rounded-md bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					<Trash2 className="h-4 w-4" />
 					<span className="sr-only">Eliminar</span>

@@ -1,81 +1,94 @@
 "use client";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { MobilePager } from "@/components/tables/MobilePager";
+import { TableEmpty, TableError } from "@/components/tables/TableStates";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { buildCoursesColumns } from "@/components/tables/columns/courses-columns";
 import {
-	useCourses,
+	useCoursesList,
 	useDeleteCourse,
 } from "@/features/courses/hooks/useCourses";
-import { useEnrollmentStats } from "@/features/enrollments/hooks/useEnrollments";
-import { useDataStore } from "@/store/data-store";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useServerTable } from "@/hooks/useServerTable";
 import { type SortingState } from "@tanstack/react-table";
+import type { CourseStatus, CourseType } from "@/types";
 import { CourseFilters } from "./_components/CourseFilters";
 import { CourseCard } from "./_components/CourseCard";
+
+const PAGE_SIZES = [10, 25, 50, 100];
 
 export default function CoursesPage() {
 	const deleteCourse = useDeleteCourse();
 
-	// Filtros locales
-	const [searchQuery, setSearchQuery] = useState("");
-	const validSearchQuery = searchQuery.length >= 3 ? searchQuery : "";
-	const debouncedSearchQuery = useDebounce(validSearchQuery, 400);
-	const [statusFilter, setStatusFilter] = useState("all");
-	const [typeFilter, setTypeFilter] = useState("all");
-
-	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
+	// Search, status/type filters, sorting and pagination all run on the
+	// server, so the filters apply to the whole catalog (not just the 50 rows
+	// that happen to be loaded) and the footer shows the true total.
+	const table = useServerTable({ pageSize: 25 });
+	const [statusFilter, setStatusFilter] = useState<CourseStatus | "all">("all");
+	const [typeFilter, setTypeFilter] = useState<CourseType | "all">("all");
 	const [sorting, setSorting] = useState<SortingState>([]);
 
 	const sort_by = sorting.length > 0 ? sorting[0].id : undefined;
 	const sort_order = sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : undefined;
 
-	const { data, isLoading, isError } = useCourses(
-		pagination.pageIndex * pagination.pageSize,
-		pagination.pageSize,
-		debouncedSearchQuery,
+	const { data, isLoading, isError, isFetching, refetch } = useCoursesList({
+		skip: table.skip,
+		limit: table.limit,
+		q: table.search || undefined,
+		status: statusFilter === "all" ? undefined : statusFilter,
+		course_type: typeFilter === "all" ? undefined : typeFilter,
 		sort_by,
-		sort_order
-	);
+		sort_order,
+	});
 
-	useEnrollmentStats();
-	// Use a stable selector — re-renders ONLY when the map reference actually changes,
-	// not on every unrelated store update. (rule: rerender-derived-state)
-	const enrolledCountMap = useDataStore((s) => s.enrolledCountMap);
-
-
-
-	// Filtrado de la data
-	const filteredData = useMemo(() => {
-		if (!data) return [];
-		return data.filter((course) => {
-			// Estado
-			const matchesStatus =
-				statusFilter === "all" || course.status === statusFilter;
-
-			// Tipo
-			const matchesType =
-				typeFilter === "all" ||
-				(typeFilter === "free" && course.course_type === "FREE") ||
-				(typeFilter === "paid" && course.course_type === "PAID");
-
-			return matchesStatus && matchesType;
-		});
-	}, [data, statusFilter, typeFilter]);
+	const items = data?.items ?? [];
+	const hasFilters =
+		table.searchInput.trim() !== "" || statusFilter !== "all" || typeFilter !== "all";
 
 	const columns = useMemo(
-		() =>
-			buildCoursesColumns((id) => deleteCourse.mutate(id), enrolledCountMap),
-		[deleteCourse, enrolledCountMap],
+		() => buildCoursesColumns((id) => deleteCourse.mutate(id)),
+		[deleteCourse],
+	);
+
+	function handleStatusChange(next: CourseStatus | "all") {
+		setStatusFilter(next);
+		table.resetPage();
+	}
+
+	function handleTypeChange(next: CourseType | "all") {
+		setTypeFilter(next);
+		table.resetPage();
+	}
+
+	function clearFilters() {
+		table.setSearchInput("");
+		setStatusFilter("all");
+		setTypeFilter("all");
+		table.resetPage();
+	}
+
+	const emptyState = (
+		<TableEmpty
+			entity="cursos"
+			hasFilters={hasFilters}
+			onClearFilters={clearFilters}
+			action={
+				<Link
+					href="/courses/new"
+					className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+					Crear el primer curso
+				</Link>
+			}
+		/>
 	);
 
 	return (
 		<div className="space-y-6">
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h2 className="text-xl font-semibold text-foreground">Cursos</h2>
 					<p className="text-sm text-muted-foreground">
@@ -84,71 +97,89 @@ export default function CoursesPage() {
 				</div>
 				<Link
 					href="/courses/new"
-					className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-					<Plus className="h-4 w-4" />
+					className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+					<Plus aria-hidden="true" className="h-4 w-4" />
 					Nuevo curso
 				</Link>
 			</div>
 
-			{/* States */}
+			<CourseFilters
+				searchQuery={table.searchInput}
+				onSearchChange={table.setSearchInput}
+				isSearchPending={table.isSearchPending}
+				statusFilter={statusFilter}
+				onStatusChange={handleStatusChange}
+				typeFilter={typeFilter}
+				onTypeChange={handleTypeChange}
+				onClear={clearFilters}
+			/>
+
 			{isLoading && (
 				<div className="rounded-xl border border-border bg-card p-4">
-					<TableSkeleton rows={6} columns={5} />
+					<TableSkeleton rows={8} columns={5} />
 				</div>
 			)}
-			{isError && (
-				<p className="text-sm text-destructive">
-					Error al cargar los cursos. Verifica que la API esté disponible.
-				</p>
+
+			{isError && !data && (
+				<TableError
+					message="No se pudieron cargar los cursos."
+					onRetry={() => refetch()}
+					isRetrying={isFetching}
+				/>
 			)}
 
-			{!isLoading && !isError && (
+			{data && (
 				<>
-					{/* Filtros */}
-					<CourseFilters
-						searchQuery={searchQuery}
-						onSearchChange={setSearchQuery}
-						statusFilter={statusFilter}
-						onStatusChange={setStatusFilter}
-						typeFilter={typeFilter}
-						onTypeChange={setTypeFilter}
-					/>
-
-					{/* Desktop Table (Hidden on small screens) */}
+					{/* Desktop table (hidden on small screens) */}
 					<div className="hidden md:block">
 						<DataTable
 							columns={columns}
-							data={filteredData}
-							rowCount={data?.length ?? 0}
-							searchPlaceholder="Buscar cursos..."
+							data={items}
+							ariaLabel="Cursos"
 							hideSearch
 							manualPagination
-							pagination={pagination}
-							onPaginationChange={setPagination}
+							pagination={table.pagination}
+							onPaginationChange={table.setPagination}
+							pageSizeOptions={PAGE_SIZES}
+							totalRecords={data.total}
+							rowCount={items.length}
+							isFetching={isFetching}
+							emptyState={emptyState}
 							manualSorting
 							sorting={sorting}
-							onSortingChange={setSorting}
+							onSortingChange={(updater: SortingState | ((old: SortingState) => SortingState)) => {
+								setSorting(updater);
+								table.resetPage();
+							}}
 						/>
 					</div>
 
-					{/* Mobile/Tablet Cards (Hidden on md and larger) */}
-					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-						{filteredData.length > 0 ? (
-							filteredData.map((course) => (
-								<CourseCard
-									key={course.id}
-									course={course}
-									enrolledCount={
-										course.enrolled_count ?? enrolledCountMap[course.id] ?? 0
-									}
-									onDelete={deleteCourse.mutate}
-								/>
-							))
-						) : (
-							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
-								No se encontraron cursos que coincidan con los filtros.
+					{/* Mobile/tablet cards (hidden on md and larger) */}
+					<div className="md:hidden">
+						{items.length > 0 ? (
+							<div
+								aria-busy={isFetching}
+								className={`grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-2 motion-reduce:transition-none ${isFetching ? "opacity-70" : ""}`}>
+								{items.map((course) => (
+									<CourseCard
+										key={course.id}
+										course={course}
+										enrolledCount={course.enrolled_count ?? 0}
+										onDelete={deleteCourse.mutate}
+									/>
+								))}
 							</div>
+						) : (
+							<div className="rounded-xl border border-border bg-card">{emptyState}</div>
 						)}
+						<MobilePager
+							pageIndex={table.pagination.pageIndex}
+							pageSize={table.pagination.pageSize}
+							total={data.total}
+							onChange={(pageIndex) =>
+								table.setPagination((p) => ({ ...p, pageIndex }))
+							}
+						/>
 					</div>
 				</>
 			)}

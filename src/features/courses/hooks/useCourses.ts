@@ -3,23 +3,17 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { CourseInput } from "../schemas/course.schema";
-import { coursesService } from "../services/courses.service";
+import { coursesService, type CourseListParams } from "../services/courses.service";
 import { useDataStore } from "@/store/data-store";
 
 const QUERY_KEY = ["courses"] as const;
 const CATALOG_KEY = ["catalog", "courses"] as const;
 
-export function useCourses(
-  skip = 0,
-  limit = 50,
-  q?: string,
-  sort_by?: string,
-  sort_order?: "asc" | "desc"
-) {
+export function useCoursesList(params: CourseListParams) {
   return useQuery({
-    queryKey: [...QUERY_KEY, { skip, limit, q, sort_by, sort_order }],
-    queryFn: () => coursesService.getAll(skip, limit, q, sort_by, sort_order),
-    staleTime: 3 * 60 * 1000, // 3 min — course lists change infrequently
+    queryKey: [...QUERY_KEY, "list", params],
+    queryFn: () => coursesService.list(params),
+    staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }

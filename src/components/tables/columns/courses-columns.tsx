@@ -43,13 +43,24 @@ function Actions({ course, onDelete }: ActionsProps) {
 		<div className="flex items-center gap-2">
 			<Link
 				href={`/courses/${course.id}`}
-				className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+				aria-label={`Editar curso ${course.title}`}
+				className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				title="Editar">
 				<Pencil className="h-4 w-4" />
 			</Link>
 			<button
-				onClick={() => onDelete(course.id)}
-				className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+				type="button"
+				onClick={() => {
+					if (
+						window.confirm(
+							`¿Eliminar el curso "${course.title}"? Esta acción no se puede deshacer.`,
+						)
+					) {
+						onDelete(course.id);
+					}
+				}}
+				aria-label={`Eliminar curso ${course.title}`}
+				className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				title="Eliminar">
 				<Trash2 className="h-4 w-4" />
 			</button>
@@ -59,7 +70,6 @@ function Actions({ course, onDelete }: ActionsProps) {
 
 export function buildCoursesColumns(
 	onDelete: (id: string) => void,
-	enrolledCountMap: Record<string, number> = {},
 ): ColumnDef<Course, unknown>[] {
 	return [
 		{
@@ -68,7 +78,8 @@ export function buildCoursesColumns(
 			cell: ({ row }) => (
 				<Link
 					href={`/courses/${row.original.id}`}
-					className="font-medium text-foreground hover:text-primary hover:underline transition-colors">
+					title={row.original.title}
+					className="line-clamp-2 font-medium text-foreground hover:text-primary hover:underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
 					{row.original.title}
 				</Link>
 			),
@@ -76,6 +87,7 @@ export function buildCoursesColumns(
 		{
 			accessorKey: "category",
 			header: "Categoría",
+			enableSorting: false,
 			cell: ({ row }) =>
 				row.original.category?.name ?? row.original.category_name ?? "—",
 			meta: { className: "hidden lg:table-cell" },
@@ -83,6 +95,7 @@ export function buildCoursesColumns(
 		{
 			accessorKey: "instructor_name",
 			header: "Instructor",
+			enableSorting: false,
 			cell: ({ row }) =>
 				row.original.instructor_name ??
 				row.original.instructor?.first_name ??
@@ -138,6 +151,7 @@ export function buildCoursesColumns(
 		{
 			accessorKey: "total_modules",
 			header: "Módulos",
+			enableSorting: false,
 			cell: ({ row }) =>
 				row.original.total_modules ?? row.original.modules?.length ?? "—",
 			meta: { className: "hidden xl:table-cell" },
@@ -145,14 +159,17 @@ export function buildCoursesColumns(
 		{
 			accessorKey: "total_lessons",
 			header: "Lecciones",
+			enableSorting: false,
 			cell: ({ row }) => row.original.total_lessons ?? "—",
 			meta: { className: "hidden xl:table-cell" },
 		},
 		{
 			accessorKey: "enrolled_count",
 			header: "Inscritos",
-			cell: ({ row }) =>
-				row.original.enrolled_count ?? enrolledCountMap[row.original.id] ?? "—",
+			enableSorting: false,
+			cell: ({ row }) => (
+				<span className="tabular-nums">{row.original.enrolled_count ?? "—"}</span>
+			),
 			meta: { className: "hidden lg:table-cell" },
 		},
 		{
@@ -167,7 +184,8 @@ export function buildCoursesColumns(
 		},
 		{
 			id: "actions",
-			header: "Acciones",
+			header: () => <span className="sr-only">Acciones</span>,
+			enableSorting: false,
 			cell: ({ row }) => <Actions course={row.original} onDelete={onDelete} />,
 		},
 	];

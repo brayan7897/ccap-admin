@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
-import type { Course } from "@/types";
+import type { Course, CourseStatus, CourseType } from "@/types";
+import { readTotal, type Page } from "@/lib/pagination";
 import type { CourseInput } from "../schemas/course.schema";
 
 /** Shape returned by the admin list endpoint — extends Course with flattened join fields. */
@@ -36,7 +37,80 @@ function cleanCoursePayload(data: Partial<CourseInput>): Record<string, unknown>
   return payload;
 }
 
+export interface CourseListParams {
+  skip?: number;
+  limit?: number;
+  q?: string;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+  status?: CourseStatus;
+  course_type?: CourseType;
+}
+
+/** Normaliza el registro de la API para que coincida con el tipo `Course` de la UI. */
+function normalizeCourse(course: ApiCourseRecord): Course {
+  return {
+    ...course,
+    category: course.category_id
+      ? {
+          id: course.category_id,
+          name: course.category_name,
+          slug: course.category_slug,
+        }
+      : undefined,
+    instructor: course.instructor_id
+      ? {
+          id: course.instructor_id,
+          first_name: course.instructor_name ?? "",
+          last_name: "",
+          avatar_url: null,
+        }
+      : undefined,
+    // Handle different field name conventions the API may use
+    total_lessons:
+      course.total_lessons ??
+      course.lessons_count ??
+      course.lesson_count ??
+      undefined,
+    total_modules:
+      course.total_modules ??
+      course.modules_count ??
+      course.module_count ??
+      undefined,
+    enrolled_count:
+      course.enrolled_count ??
+      course.enrollment_count ??
+      course.enrollments_count ??
+      undefined,
+  } as Course;
+}
+
 export const coursesService = {
+  /** Server-side paginated + filtered list; `total` comes from X-Total-Count. */
+  async list({
+    skip = 0,
+    limit = 25,
+    q,
+    sort_by,
+    sort_order,
+    status,
+    course_type,
+  }: CourseListParams = {}): Promise<Page<Course>> {
+    const params: Record<string, string | number> = { skip, limit };
+    if (q) params.q = q;
+    if (sort_by) params.sort_by = sort_by;
+    if (sort_order) params.sort_order = sort_order;
+    if (status) params.status = status;
+    if (course_type) params.course_type = course_type;
+
+    const res = await api.get<ApiCourseRecord[]>("/admin/courses", { params });
+    return {
+      items: res.data.map(normalizeCourse),
+      total: readTotal(res.headers, skip, res.data.length),
+    };
+  },
+
+  /** Plain array variant used by catalogs / comboboxes. */
   async getAll(
     skip = 0,
     limit = 50,
@@ -44,50 +118,8 @@ export const coursesService = {
     sort_by?: string,
     sort_order?: "asc" | "desc"
   ): Promise<Course[]> {
-    const params: Record<string, any> = { skip, limit };
-    if (q) params.q = q;
-    if (sort_by) params.sort_by = sort_by;
-    if (sort_order) params.sort_order = sort_order;
-
-    const res = await api.get<ApiCourseRecord[]>("/admin/courses", {
-      params,
-    });
-
-    // Normalizar la respuesta para que coincida con el tipo `Course` usado en la UI
-    return res.data.map((course: ApiCourseRecord) => ({
-      ...course,
-      category: course.category_id
-        ? {
-            id: course.category_id,
-            name: course.category_name,
-            slug: course.category_slug,
-          }
-        : undefined,
-      instructor: course.instructor_id
-        ? {
-            id: course.instructor_id,
-            first_name: course.instructor_name ?? "",
-            last_name: "",
-            avatar_url: null,
-          }
-        : undefined,
-      // Handle different field name conventions the API may use
-      total_lessons:
-        course.total_lessons ??
-        course.lessons_count ??
-        course.lesson_count ??
-        undefined,
-      total_modules:
-        course.total_modules ??
-        course.modules_count ??
-        course.module_count ??
-        undefined,
-      enrolled_count:
-        course.enrolled_count ??
-        course.enrollment_count ??
-        course.enrollments_count ??
-        undefined,
-    }) as Course);
+    const page = await coursesService.list({ skip, limit, q, sort_by, sort_order });
+    return page.items;
   },
 
   async getById(id: string): Promise<Course> {
