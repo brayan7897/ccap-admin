@@ -51,21 +51,21 @@ jobs:
         run: |
           kubectl set image deployment/ccap-admin \
             ccap-admin=${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -n brayan-ta
+            -n ccap
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/ccap-admin -n brayan-ta --timeout=120s
+          kubectl rollout status deployment/ccap-admin -n ccap --timeout=120s
 
       - name: Diagnose on failure
         if: failure()
         run: |
           echo "=== Pods ==="
-          kubectl get pods -n brayan-ta -l app=ccap-admin
+          kubectl get pods -n ccap -l app=ccap-admin
           echo "=== Describe deployment ==="
-          kubectl describe deployment ccap-admin -n brayan-ta
+          kubectl describe deployment ccap-admin -n ccap
           echo "=== Pod events ==="
-          kubectl get events -n brayan-ta --sort-by='.lastTimestamp' | tail -20
+          kubectl get events -n ccap --sort-by='.lastTimestamp' | tail -20
           echo "=== Pod logs ==="
-          kubectl logs -l app=ccap-admin -n brayan-ta --tail=50 || true
-          kubectl logs -l app=ccap-admin -n brayan-ta --previous --tail=50 || true
+          kubectl logs -l app=ccap-admin -n ccap --tail=50 || true
+          kubectl logs -l app=ccap-admin -n ccap --previous --tail=50 || true
