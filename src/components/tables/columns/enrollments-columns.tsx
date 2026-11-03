@@ -1,70 +1,68 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Enrollment, EnrollmentStatus } from "@/types";
+import type { Enrollment } from "@/types";
 import { XCircle } from "lucide-react";
+import { courseName, formatDate, studentName } from "@/lib/display";
+import { EnrollmentStatusBadge } from "@/components/shared/EnrollmentStatusBadge";
 
-const STATUS_BADGE: Record<
-	EnrollmentStatus,
-	{ label: string; className: string }
-> = {
-	ENROLLED: {
-		label: "Matriculado",
-		className:
-			"bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-	},
-	ACTIVE: {
-		label: "Activo",
-		className:
-			"bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-	},
-	COMPLETED: {
-		label: "Completado",
-		className:
-			"bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-	},
-	CANCELLED: {
-		label: "Cancelado",
-		className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-	},
-};
-
+// Names/emails come resolved from the API (user_full_name, course_title), so
+// the table never depends on a paginated client-side catalog and never shows
+// raw ids. Sorting is disabled: the server orders by enrollment date, and a
+// per-page client sort would only reorder the rows currently on screen.
 export function buildEnrollmentsColumns(
 	onCancel: (id: string) => void,
-	userMap: Record<string, string> = {},
-	courseMap: Record<string, string> = {},
 	canManage = false,
 ): ColumnDef<Enrollment, unknown>[] {
 	const columns: ColumnDef<Enrollment, unknown>[] = [
 		{
-			accessorKey: "course_title",
-			header: "Curso",
-			cell: ({ row }) =>
-				row.original.course_title ??
-				courseMap[row.original.course_id] ??
-				row.original.course_id,
+			id: "student",
+			header: "Estudiante",
+			enableSorting: false,
+			cell: ({ row }) => {
+				const name = studentName(row.original);
+				return (
+					<div className="min-w-0">
+						<span className="line-clamp-2 font-medium text-foreground" title={name}>
+							{name}
+						</span>
+						{row.original.user_email && (
+							<span
+								className="block truncate text-xs text-muted-foreground"
+								title={row.original.user_email}>
+								{row.original.user_email}
+							</span>
+						)}
+					</div>
+				);
+			},
 		},
 		{
-			accessorKey: "user_full_name",
-			header: "Estudiante",
-			cell: ({ row }) =>
-				row.original.user_full_name ??
-				userMap[row.original.user_id] ??
-				row.original.user_id,
+			id: "course",
+			header: "Curso",
+			enableSorting: false,
+			cell: ({ row }) => {
+				const title = courseName(row.original);
+				return (
+					<span className="line-clamp-2 text-foreground/90" title={title}>
+						{title}
+					</span>
+				);
+			},
 		},
 		{
 			accessorKey: "course_type",
 			header: "Tipo",
+			enableSorting: false,
 			cell: ({ row }) => {
 				const type = row.original.course_type;
-				if (!type)
-					return <span className="text-muted-foreground text-xs">—</span>;
+				if (!type) return <span className="text-xs text-muted-foreground">—</span>;
 				return (
 					<span
 						className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
 							type === "PAID"
-								? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-								: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"
+								? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+								: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
 						}`}>
 						{type === "PAID" ? "Pago" : "Gratis"}
 					</span>
@@ -75,33 +73,27 @@ export function buildEnrollmentsColumns(
 		{
 			accessorKey: "status",
 			header: "Estado",
-			cell: ({ row }) => {
-				const status = (row.original.status ?? "ENROLLED") as EnrollmentStatus;
-				const badge = STATUS_BADGE[status] ?? STATUS_BADGE.ENROLLED;
-				return (
-					<span
-						className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
-						{badge.label}
-					</span>
-				);
-			},
+			enableSorting: false,
+			cell: ({ row }) => <EnrollmentStatusBadge status={row.original.status} />,
 		},
 		{
 			accessorKey: "progress_percentage",
 			header: "Progreso",
+			enableSorting: false,
 			cell: ({ row }) => {
-				const pct = row.original.progress_percentage ?? 0;
+				const pct = Math.min(100, Math.max(0, row.original.progress_percentage ?? 0));
 				return (
-					<div className="flex items-center gap-2 min-w-20">
-						<div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
-							<div
-								className="h-full rounded-full bg-primary transition-all"
-								style={{ width: `${pct}%` }}
-							/>
+					<div className="flex min-w-24 items-center gap-2">
+						<div
+							role="progressbar"
+							aria-label="Progreso del estudiante"
+							aria-valuemin={0}
+							aria-valuemax={100}
+							aria-valuenow={Math.round(pct)}
+							className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+							<div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
 						</div>
-						<span className="text-xs text-muted-foreground">
-							{pct.toFixed(0)}%
-						</span>
+						<span className="text-xs tabular-nums text-muted-foreground">{pct.toFixed(0)}%</span>
 					</div>
 				);
 			},
@@ -110,20 +102,16 @@ export function buildEnrollmentsColumns(
 		{
 			accessorKey: "enrolled_at",
 			header: "Matriculado el",
-			cell: ({ row }) => {
-				const date = row.original.enrolled_at;
-				if (!date)
-					return <span className="text-muted-foreground text-xs">—</span>;
-				return (
-					<span className="text-xs text-muted-foreground">
-						{new Date(date).toLocaleDateString("es-PE", {
-							day: "2-digit",
-							month: "short",
-							year: "numeric",
-						})}
-					</span>
-				);
-			},
+			enableSorting: false,
+			cell: ({ row }) => (
+				<span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+					{formatDate(row.original.enrolled_at, {
+						day: "2-digit",
+						month: "2-digit",
+						year: "numeric",
+					})}
+				</span>
+			),
 			meta: { className: "hidden xl:table-cell" },
 		},
 	];
@@ -131,21 +119,39 @@ export function buildEnrollmentsColumns(
 	if (canManage) {
 		columns.push({
 			id: "actions",
-			header: "Acciones",
+			header: () => <span className="sr-only">Acciones</span>,
+			enableSorting: false,
 			cell: ({ row }) => {
 				const isCancelled = row.original.status === "CANCELLED";
+				const name = studentName(row.original);
 				return (
-					<button
-						onClick={() => onCancel(row.original.id)}
-						disabled={isCancelled}
-						className={`rounded-md p-1.5 transition-colors ${
-							isCancelled
-								? "cursor-not-allowed text-muted-foreground/40"
-								: "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-						}`}
-						title={isCancelled ? "Ya cancelada" : "Cancelar matrícula"}>
-						<XCircle className="h-4 w-4" />
-					</button>
+					<div className="flex justify-end">
+						<button
+							type="button"
+							onClick={() => {
+								if (
+									window.confirm(
+										"¿Seguro que deseas cancelar esta matrícula? Retirará el acceso del usuario al curso.",
+									)
+								) {
+									onCancel(row.original.id);
+								}
+							}}
+							disabled={isCancelled}
+							aria-label={
+								isCancelled
+									? `Matrícula de ${name} ya cancelada`
+									: `Cancelar matrícula de ${name}`
+							}
+							title={isCancelled ? "Ya cancelada" : "Cancelar matrícula"}
+							className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+								isCancelled
+									? "cursor-not-allowed text-muted-foreground/40"
+									: "cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+							}`}>
+							<XCircle className="h-4 w-4" />
+						</button>
+					</div>
 				);
 			},
 		});

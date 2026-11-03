@@ -1,42 +1,32 @@
 "use client";
 
 import type { Enrollment, EnrollmentStatus } from "@/types";
-import { X, User, BookOpen, Clock, Tag, XCircle } from "lucide-react";
+import { X, User, BookOpen, Clock, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Portal } from "@/components/shared/Portal";
+import { courseName, formatDate, studentName } from "@/lib/display";
+import { EnrollmentStatusBadge } from "@/components/shared/EnrollmentStatusBadge";
 
 interface EnrollmentDetailModalProps {
 	enrollment: Enrollment | null;
 	isOpen: boolean;
 	onClose: () => void;
-	userMap: Record<string, string>;
-	courseMap: Record<string, string>;
 	onCancel: (id: string) => void;
 	canManage: boolean;
 }
-
-const STATUS_BADGE: Record<EnrollmentStatus, { label: string; className: string }> = {
-	ENROLLED: { label: "Matriculado", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-	ACTIVE: { label: "Activo", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
-	COMPLETED: { label: "Completado", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-	CANCELLED: { label: "Cancelado", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-};
 
 export function EnrollmentDetailModal({
 	enrollment,
 	isOpen,
 	onClose,
-	userMap,
-	courseMap,
 	onCancel,
 	canManage,
 }: EnrollmentDetailModalProps) {
 	if (!isOpen || !enrollment) return null;
 
 	const status = (enrollment.status ?? "ENROLLED") as EnrollmentStatus;
-	const badge = STATUS_BADGE[status] ?? STATUS_BADGE.ENROLLED;
-	const studentName = enrollment.user_full_name ?? userMap[enrollment.user_id] ?? "Estudiante";
-	const courseName = enrollment.course_title ?? courseMap[enrollment.course_id] ?? "Curso";
+	const student = studentName(enrollment);
+	const course = courseName(enrollment);
 	const type = enrollment.course_type;
 	const pct = enrollment.progress_percentage ?? 0;
 	const isCancelled = status === "CANCELLED";
@@ -54,8 +44,10 @@ export function EnrollmentDetailModal({
 						<p className="text-sm text-muted-foreground">Información de inscripción al curso.</p>
 					</div>
 					<button
+						type="button"
 						onClick={onClose}
-						className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+						aria-label="Cerrar"
+						className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<X className="h-4 w-4" />
 					</button>
@@ -68,9 +60,7 @@ export function EnrollmentDetailModal({
 					<div className="flex flex-wrap gap-3">
 						<div className="flex-1 rounded-lg border border-border p-3 flex flex-col justify-center items-center bg-card">
 							<span className="text-xs font-medium text-muted-foreground mb-1">Estado actual</span>
-							<span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider", badge.className)}>
-								{badge.label}
-							</span>
+							<EnrollmentStatusBadge status={status} />
 						</div>
 						<div className="flex-1 rounded-lg border border-border p-3 flex flex-col justify-center items-center bg-card">
 							<span className="text-xs font-medium text-muted-foreground mb-1">Tipo de Curso</span>
@@ -90,14 +80,17 @@ export function EnrollmentDetailModal({
 							<BookOpen className="h-5 w-5 text-primary mt-0.5" />
 							<div>
 								<p className="text-xs text-muted-foreground">Curso</p>
-								<p className="text-sm font-medium">{courseName}</p>
+								<p className="text-sm font-medium">{course}</p>
 							</div>
 						</div>
 						<div className="flex items-start gap-3">
 							<User className="h-5 w-5 text-primary mt-0.5" />
 							<div>
 								<p className="text-xs text-muted-foreground">Estudiante</p>
-								<p className="text-sm font-medium">{studentName}</p>
+								<p className="text-sm font-medium">{student}</p>
+								{enrollment.user_email && (
+									<p className="text-xs text-muted-foreground break-all">{enrollment.user_email}</p>
+								)}
 							</div>
 						</div>
 					</div>
@@ -122,11 +115,11 @@ export function EnrollmentDetailModal({
 								<div>
 									<p className="text-xs text-muted-foreground">Matriculado el</p>
 									<p className="text-sm font-medium">
-										{enrollment.enrolled_at ? new Date(enrollment.enrolled_at).toLocaleDateString("es-PE", {
+										{formatDate(enrollment.enrolled_at, {
 											day: "2-digit",
 											month: "long",
 											year: "numeric",
-										}) : "—"}
+										})}
 									</p>
 								</div>
 							</div>

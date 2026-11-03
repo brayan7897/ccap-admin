@@ -3,104 +3,87 @@
 import { useMemo, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { DataTable } from "@/components/tables/DataTable";
+import { MobilePager } from "@/components/tables/MobilePager";
+import { TableEmpty, TableError } from "@/components/tables/TableStates";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { buildEnrollmentsColumns } from "@/components/tables/columns/enrollments-columns";
 import {
-	useEnrollments,
+	useEnrollmentsList,
 	useCancelEnrollment,
 } from "@/features/enrollments/hooks/useEnrollments";
-import { useUsersCatalog, useCoursesCatalog } from "@/hooks/useCatalog";
+import { useServerTable } from "@/hooks/useServerTable";
 import { usePermissions } from "@/hooks/usePermissions";
 import { EnrollmentModal } from "@/components/shared/EnrollmentModal";
+import { studentName } from "@/lib/display";
 import type { Enrollment, EnrollmentStatus } from "@/types";
 import { EnrollmentFilters } from "./_components/EnrollmentFilters";
 import { EnrollmentCard } from "./_components/EnrollmentCard";
 import { EnrollmentDetailModal } from "./_components/EnrollmentDetailModal";
 
-const STATUS_OPTIONS: { value: EnrollmentStatus | "ALL"; label: string }[] = [
-	{ value: "ALL", label: "Todos los estados" },
-	{ value: "ENROLLED", label: "Matriculado" },
-	{ value: "ACTIVE", label: "Activo" },
-	{ value: "COMPLETED", label: "Completado" },
-	{ value: "CANCELLED", label: "Cancelado" },
-];
+const PAGE_SIZES = [10, 25, 50, 100];
 
 export default function EnrollmentsPage() {
-	// Server-side pagination (same pattern as CoursesPage) — the list was
-	// previously hardcoded to the first 200 enrollments with no way to reach
-	// anything past that, and the "N registros en total" footer showed that
-	// capped count as if it were the true total.
-	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 200 });
-	const { data, isLoading, isError } = useEnrollments(
-		pagination.pageIndex * pagination.pageSize,
-		pagination.pageSize,
-	);
-	const cancelEnrollment = useCancelEnrollment();
+	// Search, status filter and pagination run on the server: the API filters
+	// across ALL enrollments, returns student + course names already resolved
+	// and sends the real total in X-Total-Count. No user/course catalogs are
+	// downloaded just to translate ids into names.
+	const table = useServerTable({ pageSize: 25 });
+	const [statusFilter, setStatusFilter] = useState<EnrollmentStatus | "ALL">("ALL");
 
-	const { users } = useUsersCatalog();
-	const { courses } = useCoursesCatalog();
+	const { data, isLoading, isError, isFetching, refetch } = useEnrollmentsList({
+		skip: table.skip,
+		limit: table.limit,
+		q: table.search || undefined,
+		status: statusFilter === "ALL" ? undefined : statusFilter,
+	});
+	const cancelEnrollment = useCancelEnrollment();
 
 	const { hasPermission } = usePermissions();
 	const canManage = hasPermission("enrollment:manage");
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [statusFilter, setStatusFilter] = useState<EnrollmentStatus | "ALL">(
-		"ALL",
-	);
-	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedViewEnrollment, setSelectedViewEnrollment] = useState<Enrollment | null>(null);
 
-	const userMap = useMemo<Record<string, string>>(
-		() =>
-			users.reduce<Record<string, string>>((acc, u) => {
-				acc[u.id] = u.full_name ?? `${u.first_name} ${u.last_name}`.trim();
-				return acc;
-			}, {}),
-		[users],
-	);
-
-	const courseMap = useMemo<Record<string, string>>(
-		() =>
-			courses.reduce<Record<string, string>>((acc, c) => {
-				acc[c.id] = c.title;
-				return acc;
-			}, {}),
-		[courses],
-	);
-
-	const filteredData = useMemo(() => {
-		if (!data) return [];
-		return data.filter((e) => {
-			const matchesStatus = statusFilter === "ALL" || e.status === statusFilter;
-			
-			const studentName = (e.user_full_name ?? userMap[e.user_id] ?? "").toLowerCase();
-			const courseName = (e.course_title ?? courseMap[e.course_id] ?? "").toLowerCase();
-			const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
-			
-			const matchesSearch = !search || studentName.includes(search) || courseName.includes(search);
-			
-			return matchesStatus && matchesSearch;
-		});
-	}, [data, statusFilter, searchQuery, userMap, courseMap]);
+	const items = data?.items ?? [];
+	const hasFilters = table.searchInput.trim() !== "" || statusFilter !== "ALL";
 
 	const columns = useMemo(
-		() =>
-			buildEnrollmentsColumns(
-				(id) => cancelEnrollment.mutate(id),
-				userMap,
-				courseMap,
-				canManage,
-			),
-		[cancelEnrollment, userMap, courseMap, canManage],
+		() => buildEnrollmentsColumns((id) => cancelEnrollment.mutate(id), canManage),
+		[cancelEnrollment, canManage],
 	);
 
-	function handleCancel(id: string) {
-		cancelEnrollment.mutate(id);
+	function handleStatusChange(next: EnrollmentStatus | "ALL") {
+		setStatusFilter(next);
+		table.resetPage();
 	}
+
+	function clearFilters() {
+		table.setSearchInput("");
+		setStatusFilter("ALL");
+		table.resetPage();
+	}
+
+	const emptyState = (
+		<TableEmpty
+			entity="matrículas"
+			hasFilters={hasFilters}
+			onClearFilters={clearFilters}
+			action={
+				canManage ? (
+					<button
+						type="button"
+						onClick={() => setIsModalOpen(true)}
+						className="cursor-pointer rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+						Matricular usuario
+					</button>
+				) : undefined
+			}
+		/>
+	);
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h2 className="text-xl font-semibold text-foreground">Matrículas</h2>
 					<p className="text-sm text-muted-foreground">
@@ -110,83 +93,96 @@ export default function EnrollmentsPage() {
 
 				{canManage && (
 					<button
+						type="button"
 						onClick={() => setIsModalOpen(true)}
-						className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-						<UserPlus className="h-4 w-4" />
+						className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+						<UserPlus aria-hidden="true" className="h-4 w-4" />
 						Matricular usuario
 					</button>
 				)}
 			</div>
 
+			<EnrollmentFilters
+				searchQuery={table.searchInput}
+				onSearchChange={table.setSearchInput}
+				isSearchPending={table.isSearchPending}
+				statusFilter={statusFilter}
+				onStatusChange={handleStatusChange}
+				onClear={clearFilters}
+			/>
+
 			{isLoading && (
 				<div className="rounded-xl border border-border bg-card p-4">
-					<TableSkeleton rows={6} columns={5} />
+					<TableSkeleton rows={8} columns={5} />
 				</div>
 			)}
-			{isError && (
-				<p className="text-sm text-destructive">
-					Error al cargar matrículas. Verifica que la API esté disponible.
-				</p>
+
+			{isError && !data && (
+				<TableError
+					message="No se pudieron cargar las matrículas."
+					onRetry={() => refetch()}
+					isRetrying={isFetching}
+				/>
 			)}
 
-			{!isLoading && !isError && (
+			{data && (
 				<>
-					{/* Filtros */}
-					<EnrollmentFilters
-						searchQuery={searchQuery}
-						onSearchChange={setSearchQuery}
-						statusFilter={statusFilter}
-						onStatusChange={setStatusFilter}
-					/>
-
-					{/* Desktop Table (Hidden on small screens) */}
+					{/* Desktop table (hidden on small screens) */}
 					<div className="hidden md:block">
 						<DataTable
 							columns={columns}
-							data={filteredData}
-							rowCount={data?.length ?? 0}
-							searchPlaceholder="Buscar en resultados..."
+							data={items}
+							ariaLabel="Matrículas"
+							getRowAriaLabel={(e) => `Ver matrícula de ${studentName(e)}`}
 							hideSearch
 							manualPagination
-							pagination={pagination}
-							onPaginationChange={setPagination}
+							pagination={table.pagination}
+							onPaginationChange={table.setPagination}
+							pageSizeOptions={PAGE_SIZES}
+							totalRecords={data.total}
+							rowCount={items.length}
+							isFetching={isFetching}
+							emptyState={emptyState}
 							onRowClick={setSelectedViewEnrollment}
 						/>
 					</div>
 
-					{/* Mobile/Tablet Cards (Hidden on md and larger) */}
-					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-						{filteredData.length > 0 ? (
-							filteredData.map((enrollment) => (
-								<EnrollmentCard
-									key={enrollment.id}
-									enrollment={enrollment}
-									userMap={userMap}
-									courseMap={courseMap}
-									onClick={() => setSelectedViewEnrollment(enrollment)}
-								/>
-							))
-						) : (
-							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
-								No se encontraron matrículas que coincidan con los filtros.
+					{/* Mobile/tablet cards (hidden on md and larger) */}
+					<div className="md:hidden">
+						{items.length > 0 ? (
+							<div
+								aria-busy={isFetching}
+								className={`grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-2 motion-reduce:transition-none ${isFetching ? "opacity-70" : ""}`}>
+								{items.map((enrollment) => (
+									<EnrollmentCard
+										key={enrollment.id}
+										enrollment={enrollment}
+										onClick={() => setSelectedViewEnrollment(enrollment)}
+									/>
+								))}
 							</div>
+						) : (
+							<div className="rounded-xl border border-border bg-card">{emptyState}</div>
 						)}
+						<MobilePager
+							pageIndex={table.pagination.pageIndex}
+							pageSize={table.pagination.pageSize}
+							total={data.total}
+							onChange={(pageIndex) =>
+								table.setPagination((p) => ({ ...p, pageIndex }))
+							}
+						/>
 					</div>
 				</>
 			)}
 
-			<EnrollmentModal
-				isOpen={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-			/>
-			
+			<EnrollmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
 			<EnrollmentDetailModal
 				enrollment={selectedViewEnrollment}
 				isOpen={!!selectedViewEnrollment}
 				onClose={() => setSelectedViewEnrollment(null)}
-				userMap={userMap}
-				courseMap={courseMap}
-				onCancel={handleCancel}
+				onCancel={(id) => cancelEnrollment.mutate(id)}
 				canManage={canManage}
 			/>
 		</div>

@@ -1,10 +1,28 @@
 import { api } from "@/lib/api";
 import type { Certificate } from "@/types";
+import { readTotal, type Page } from "@/lib/pagination";
+
+export interface CertificateListParams {
+  skip?: number;
+  limit?: number;
+  /** Free text: student name, DNI, email, course title or certificate code. */
+  q?: string;
+  course_id?: string;
+  user_id?: string;
+}
 
 export const certificatesService = {
-  async getAll(skip = 0, limit = 50): Promise<Certificate[]> {
-    const res = await api.get<Certificate[]>("/certificates/", { params: { skip, limit } });
-    return res.data;
+  /** Server-side paginated + filtered list (names come resolved from the API). */
+  async list({ skip = 0, limit = 25, q, course_id, user_id }: CertificateListParams = {}): Promise<Page<Certificate>> {
+    const params = {
+      skip,
+      limit,
+      ...(q && { q }),
+      ...(course_id && { course_id }),
+      ...(user_id && { user_id }),
+    };
+    const res = await api.get<Certificate[]>("/certificates/", { params });
+    return { items: res.data, total: readTotal(res.headers, skip, res.data.length) };
   },
 
   async getById(id: string): Promise<Certificate> {

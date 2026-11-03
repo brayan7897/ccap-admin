@@ -1,67 +1,45 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PlusCircle } from "lucide-react";
 import { DataTable } from "@/components/tables/DataTable";
+import { MobilePager } from "@/components/tables/MobilePager";
+import { TableEmpty, TableError } from "@/components/tables/TableStates";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import { buildCertificatesColumns } from "@/components/tables/columns/certificates-columns";
 import {
-	useCertificates,
+	useCertificatesList,
 	useDeleteCertificate,
 } from "@/features/certificates/hooks/useCertificates";
-import { useUsersCatalog, useCoursesCatalog } from "@/hooks/useCatalog";
+import { useServerTable } from "@/hooks/useServerTable";
 import { CertificateModal } from "@/components/shared/CertificateModal";
+import { studentName } from "@/lib/display";
 import type { Certificate } from "@/types";
-import { PlusCircle } from "lucide-react";
 import { CertificateFilters } from "./_components/CertificateFilters";
 import { CertificateCard } from "./_components/CertificateCard";
 import { CertificateDetailModal } from "./_components/CertificateDetailModal";
 
+const PAGE_SIZES = [10, 25, 50, 100];
+
 export default function CertificatesPage() {
-	// Server-side pagination (same pattern as CoursesPage) — the list was
-	// previously hardcoded to the first 50 certificates ever issued with no way
-	// to reach anything past that, and the "N registros en total" footer showed
-	// that capped count as if it were the true total.
-	const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
-	const { data, isLoading, isError } = useCertificates(
-		pagination.pageIndex * pagination.pageSize,
-		pagination.pageSize,
-	);
+	// Search + pagination run on the server: the API filters by student, DNI,
+	// course or code across ALL certificates, returns the names already
+	// resolved, and sends the real total in X-Total-Count. No user/course
+	// catalogs are downloaded just to translate ids into names.
+	const table = useServerTable({ pageSize: 25 });
+	const { data, isLoading, isError, isFetching, refetch } = useCertificatesList({
+		skip: table.skip,
+		limit: table.limit,
+		q: table.search || undefined,
+	});
 	const deleteCertificate = useDeleteCertificate();
-	const { users } = useUsersCatalog();
-	const { courses } = useCoursesCatalog();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingCert, setEditingCert] = useState<Certificate | null>(null);
 	const [viewingCert, setViewingCert] = useState<Certificate | null>(null);
-	const [searchQuery, setSearchQuery] = useState("");
 
-	const userMap = useMemo<Record<string, string>>(
-		() =>
-			users.reduce<Record<string, string>>((acc, u) => {
-				acc[u.id] = u.full_name ?? `${u.first_name} ${u.last_name}`.trim();
-				return acc;
-			}, {}),
-		[users],
-	);
-
-	const courseMap = useMemo<Record<string, string>>(
-		() =>
-			courses.reduce<Record<string, string>>((acc, c) => {
-				acc[c.id] = c.title;
-				return acc;
-			}, {}),
-		[courses],
-	);
-
-	const filteredData = useMemo(() => {
-		if (!data) return [];
-		const search = searchQuery.length >= 3 ? searchQuery.toLowerCase() : "";
-		return data.filter((c) => {
-			const studentName = (userMap[c.user_id] ?? c.user_id).toLowerCase();
-			const courseName = (courseMap[c.course_id] ?? c.course_id).toLowerCase();
-			const code = c.certificate_code.toLowerCase();
-			return !search || studentName.includes(search) || courseName.includes(search) || code.includes(search);
-		});
-	}, [data, searchQuery, userMap, courseMap]);
+	const items = data?.items ?? [];
+	const hasFilters = table.searchInput.trim() !== "";
 
 	const columns = useMemo(
 		() =>
@@ -71,10 +49,8 @@ export default function CertificatesPage() {
 					setIsModalOpen(true);
 				},
 				(id) => deleteCertificate.mutate(id),
-				userMap,
-				courseMap,
 			),
-		[deleteCertificate, userMap, courseMap],
+		[deleteCertificate],
 	);
 
 	function handleOpenCreate() {
@@ -87,71 +63,97 @@ export default function CertificatesPage() {
 		setEditingCert(null);
 	}
 
+	const emptyState = (
+		<TableEmpty
+			entity="certificados"
+			hasFilters={hasFilters}
+			onClearFilters={() => table.setSearchInput("")}
+		/>
+	);
+
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h2 className="text-xl font-semibold text-foreground">
-						Certificados
-					</h2>
+					<h2 className="text-xl font-semibold text-foreground">Certificados</h2>
 					<p className="text-sm text-muted-foreground">
 						Lista de certificados generados en la plataforma.
 					</p>
 				</div>
 				<button
+					type="button"
 					onClick={handleOpenCreate}
-					className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-					<PlusCircle className="h-4 w-4" />
+					className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+					<PlusCircle aria-hidden="true" className="h-4 w-4" />
 					Emitir certificado
 				</button>
 			</div>
 
+			<CertificateFilters
+				searchQuery={table.searchInput}
+				onSearchChange={table.setSearchInput}
+				isSearchPending={table.isSearchPending}
+			/>
+
 			{isLoading && (
-				<p className="text-sm text-muted-foreground">Cargando certificados…</p>
-			)}
-			{isError && (
-				<p className="text-sm text-destructive">
-					Error al cargar certificados. Verifica que la API esté disponible.
-				</p>
+				<div className="rounded-xl border border-border bg-card p-4">
+					<TableSkeleton rows={8} columns={4} />
+				</div>
 			)}
 
-			{!isLoading && !isError && (
+			{isError && !data && (
+				<TableError
+					message="No se pudieron cargar los certificados."
+					onRetry={() => refetch()}
+					isRetrying={isFetching}
+				/>
+			)}
+
+			{data && (
 				<>
-					<CertificateFilters
-						searchQuery={searchQuery}
-						onSearchChange={setSearchQuery}
-					/>
-
 					<div className="hidden md:block">
 						<DataTable
 							columns={columns}
-							data={filteredData}
-							rowCount={data?.length ?? 0}
-							searchPlaceholder="Buscar certificados…"
+							data={items}
+							ariaLabel="Certificados emitidos"
+							getRowAriaLabel={(c) => `Ver certificado de ${studentName(c)}`}
 							hideSearch
 							manualPagination
-							pagination={pagination}
-							onPaginationChange={setPagination}
+							pagination={table.pagination}
+							onPaginationChange={table.setPagination}
+							pageSizeOptions={PAGE_SIZES}
+							totalRecords={data.total}
+							rowCount={items.length}
+							isFetching={isFetching}
+							emptyState={emptyState}
 							onRowClick={setViewingCert}
 						/>
 					</div>
 
-					<div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-						{filteredData.length > 0 ? (
-							filteredData.map((cert) => (
-								<CertificateCard
-									key={cert.id}
-									certificate={cert}
-									userMap={userMap}
-									courseMap={courseMap}
-									onClick={() => setViewingCert(cert)}
-								/>
-							))
-						) : (
-							<div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-xl">
-								No se encontraron certificados que coincidan con la búsqueda.
+					<div className="md:hidden">
+						{items.length > 0 ? (
+							<div
+								aria-busy={isFetching}
+								className={`grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-2 motion-reduce:transition-none ${isFetching ? "opacity-70" : ""}`}>
+								{items.map((cert) => (
+									<CertificateCard
+										key={cert.id}
+										certificate={cert}
+										onClick={() => setViewingCert(cert)}
+									/>
+								))}
 							</div>
+						) : (
+							<div className="rounded-xl border border-border bg-card">{emptyState}</div>
 						)}
+						<MobilePager
+							pageIndex={table.pagination.pageIndex}
+							pageSize={table.pagination.pageSize}
+							total={data.total}
+							onChange={(pageIndex) =>
+								table.setPagination((p) => ({ ...p, pageIndex }))
+							}
+						/>
 					</div>
 				</>
 			)}
@@ -166,8 +168,6 @@ export default function CertificatesPage() {
 				certificate={viewingCert}
 				isOpen={!!viewingCert}
 				onClose={() => setViewingCert(null)}
-				userMap={userMap}
-				courseMap={courseMap}
 				onEdit={(cert) => {
 					setEditingCert(cert);
 					setIsModalOpen(true);

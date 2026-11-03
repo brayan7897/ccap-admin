@@ -3,13 +3,12 @@
 import type { Certificate } from "@/types";
 import { X, Pencil, Trash2, Award, User, BookOpen, Clock, FileKey, ExternalLink } from "lucide-react";
 import { Portal } from "@/components/shared/Portal";
+import { courseName, formatDate, studentName } from "@/lib/display";
 
 interface CertificateDetailModalProps {
 	certificate: Certificate | null;
 	isOpen: boolean;
 	onClose: () => void;
-	userMap: Record<string, string>;
-	courseMap: Record<string, string>;
 	onEdit: (certificate: Certificate) => void;
 	onDelete: (id: string) => void;
 }
@@ -18,15 +17,13 @@ export function CertificateDetailModal({
 	certificate,
 	isOpen,
 	onClose,
-	userMap,
-	courseMap,
 	onEdit,
 	onDelete,
 }: CertificateDetailModalProps) {
 	if (!isOpen || !certificate) return null;
 
-	const studentName = userMap[certificate.user_id] ?? certificate.user_id;
-	const courseName = courseMap[certificate.course_id] ?? certificate.course_id;
+	const student = studentName(certificate);
+	const course = courseName(certificate);
 
 	return (
 		<Portal>
@@ -45,8 +42,10 @@ export function CertificateDetailModal({
 						</div>
 					</div>
 					<button
+						type="button"
 						onClick={onClose}
-						className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors self-start"
+						aria-label="Cerrar"
+						className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors self-start cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<X className="h-4 w-4" />
 					</button>
@@ -61,7 +60,7 @@ export function CertificateDetailModal({
 							<BookOpen className="h-5 w-5 text-primary shrink-0 mt-0.5" />
 							<div>
 								<p className="text-xs text-muted-foreground">Curso</p>
-								<p className="text-sm font-medium">{courseName}</p>
+								<p className="text-sm font-medium">{course}</p>
 							</div>
 						</div>
 						
@@ -69,7 +68,7 @@ export function CertificateDetailModal({
 							<User className="h-5 w-5 text-primary shrink-0 mt-0.5" />
 							<div>
 								<p className="text-xs text-muted-foreground">Estudiante</p>
-								<p className="text-sm font-medium">{studentName}</p>
+								<p className="text-sm font-medium">{student}</p>
 							</div>
 						</div>
 
@@ -87,10 +86,10 @@ export function CertificateDetailModal({
 								<div>
 									<p className="text-xs text-muted-foreground">Fecha de emisión</p>
 									<p className="text-sm font-medium">
-										{new Date(certificate.issued_at).toLocaleDateString("es-PE", {
+										{formatDate(certificate.issued_at, {
 											day: "2-digit",
 											month: "long",
-											year: "numeric"
+											year: "numeric",
 										})}
 									</p>
 								</div>

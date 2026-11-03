@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { enrollmentsService } from "../services/enrollments.service";
+import { enrollmentsService, type EnrollmentListParams } from "../services/enrollments.service";
 import { useDataStore } from "@/store/data-store";
 
 const QUERY_KEY = ["enrollments"] as const;
 
 // ── Admin: all enrollments ────────────────────────────────────────────────────
-export function useEnrollments(skip = 0, limit = 50) {
+export function useEnrollmentsList(params: EnrollmentListParams) {
   return useQuery({
-    queryKey: [...QUERY_KEY, { skip, limit }],
-    queryFn: () => enrollmentsService.getAll(skip, limit),
-    staleTime: 3 * 60 * 1000, // 3 min — enrollment lists don't change every second
+    queryKey: [...QUERY_KEY, "list", params],
+    queryFn: () => enrollmentsService.list(params),
+    staleTime: 30 * 1000,
+    // Keep the previous page on screen while the next one loads (no flicker).
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -24,35 +25,6 @@ export function useMyEnrollments() {
     queryFn: () => enrollmentsService.getMyEnrollments(),
     staleTime: 2 * 60 * 1000, // 2 min
   });
-}
-
-/**
- * Carga agregada de matrículas para estadísticas.
- * Trae hasta 1 000 registros una sola vez y popula el data-store con el mapa
- * { course_id → enrolled_count }. El store evita re-cálculos en cada render
- * y comparte el resultado entre todos los paneles que lo consuman.
- */
-export function useEnrollmentStats() {
-  const { enrollmentStatsLoaded, setEnrollmentsData } = useDataStore();
-
-  const query = useQuery({
-    queryKey: [...QUERY_KEY, "stats"],
-    queryFn: () => enrollmentsService.getAll(0, 1000),
-    // Solo se ejecuta si el store todavía no tiene datos
-    enabled: !enrollmentStatsLoaded,
-    staleTime: 5 * 60 * 1000, // 5 min — no re-fetch innecesarios
-  });
-
-  useEffect(() => {
-    if (!query.data) return;
-    const map = query.data.reduce<Record<string, number>>((acc, e) => {
-      acc[e.course_id] = (acc[e.course_id] ?? 0) + 1;
-      return acc;
-    }, {});
-    setEnrollmentsData(query.data, map);
-  }, [query.data, setEnrollmentsData]);
-
-  return query;
 }
 
 export function useEnroll() {

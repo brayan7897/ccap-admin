@@ -1,17 +1,20 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { certificatesService } from "../services/certificates.service";
+import { certificatesService, type CertificateListParams } from "../services/certificates.service";
 import type { Certificate } from "@/types";
 
 const QUERY_KEY = ["certificates"] as const;
 
 // ── Admin: all certificates ───────────────────────────────────────────────────
-export function useCertificates(skip = 0, limit = 50) {
+export function useCertificatesList(params: CertificateListParams) {
   return useQuery({
-    queryKey: [...QUERY_KEY, { skip, limit }],
-    queryFn: () => certificatesService.getAll(skip, limit),
+    queryKey: [...QUERY_KEY, "list", params],
+    queryFn: () => certificatesService.list(params),
+    staleTime: 30 * 1000,
+    // Keep the previous page on screen while the next one loads (no flicker).
+    placeholderData: keepPreviousData,
   });
 }
 

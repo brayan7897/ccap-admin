@@ -1,48 +1,44 @@
 "use client";
 
 import type { Certificate } from "@/types";
-import { Award, User, BookOpen } from "lucide-react";
+import { Award, User } from "lucide-react";
+import { courseName, formatDate, studentName } from "@/lib/display";
 
 interface CertificateCardProps {
 	certificate: Certificate;
-	userMap: Record<string, string>;
-	courseMap: Record<string, string>;
 	onClick: () => void;
 }
 
-export function CertificateCard({ certificate, userMap, courseMap, onClick }: CertificateCardProps) {
-	const studentName = userMap[certificate.user_id] ?? certificate.user_id;
-	const courseName = courseMap[certificate.course_id] ?? certificate.course_id;
+export function CertificateCard({ certificate, onClick }: CertificateCardProps) {
+	const student = studentName(certificate);
+	const course = courseName(certificate);
 
 	return (
-		<div
+		<button
+			type="button"
 			onClick={onClick}
-			className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md cursor-pointer active:scale-[0.98]"
-		>
-			<div className="p-4 flex-1">
-				<div className="flex items-center gap-2 mb-3">
-					<Award className="h-5 w-5 text-primary shrink-0" />
-					<h3 className="font-semibold text-sm leading-tight text-foreground line-clamp-2">
-						{courseName}
+			aria-label={`Ver certificado de ${student}`}
+			className="flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+			<div className="flex-1 p-4">
+				<div className="mb-3 flex items-center gap-2">
+					<Award aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />
+					<h3 className="line-clamp-2 text-sm font-semibold leading-tight text-foreground">
+						{course}
 					</h3>
 				</div>
-				
-				<div className="space-y-2 mt-2">
+
+				<div className="mt-2 space-y-2">
 					<div className="flex items-center gap-2">
-						<User className="h-4 w-4 text-muted-foreground shrink-0" />
-						<p className="text-xs text-muted-foreground line-clamp-1">{studentName}</p>
+						<User aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
+						<p className="line-clamp-1 text-sm text-muted-foreground">{student}</p>
 					</div>
-					
-					<div className="flex justify-between items-center pt-2 border-t border-border mt-2">
-						<span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+
+					<div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2">
+						<span className="truncate rounded bg-muted/50 px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
 							{certificate.certificate_code}
 						</span>
-						<span className="text-[10px] text-muted-foreground">
-							{new Date(certificate.issued_at).toLocaleDateString("es-PE", {
-								day: "2-digit",
-								month: "short",
-								year: "numeric"
-							})}
+						<span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+							{formatDate(certificate.issued_at)}
 						</span>
 					</div>
 				</div>
@@ -50,6 +46,6 @@ export function CertificateCard({ certificate, userMap, courseMap, onClick }: Ce
 			<div className="border-t border-border bg-muted/20 px-4 py-2 text-center">
 				<span className="text-xs font-medium text-primary">Ver detalles</span>
 			</div>
-		</div>
+		</button>
 	);
 }
