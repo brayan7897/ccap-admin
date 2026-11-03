@@ -160,3 +160,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Indeterminate progress bar shown on tables while a page/filter refetch is in flight */
+@keyframes table-loading {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
