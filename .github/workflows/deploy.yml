@@ -43,29 +43,31 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Kubernetes
-        uses: tale/kubectl-action@v1
+        uses: appleboy/ssh-action@v1
         with:
-          base64-kube-config: ${{ secrets.KUBECONFIG_DATA }}
-
-      - name: Update deployment image
-        run: |
-          kubectl set image deployment/ccap-admin \
-            ccap-admin=${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -n ccap
-
-      - name: Wait for rollout
-        run: |
-          kubectl rollout status deployment/ccap-admin -n ccap --timeout=120s
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            export KUBECONFIG=/home/ccap-deploy/.kube/config
+            kubectl set image deployment/ccap-admin ccap-admin=${{ env.IMAGE_NAME }}:${{ github.sha }} -n ccap
+            kubectl rollout status deployment/ccap-admin -n ccap --timeout=120s
 
       - name: Diagnose on failure
         if: failure()
-        run: |
-          echo "=== Pods ==="
-          kubectl get pods -n ccap -l app=ccap-admin
-          echo "=== Describe deployment ==="
-          kubectl describe deployment ccap-admin -n ccap
-          echo "=== Pod events ==="
-          kubectl get events -n ccap --sort-by='.lastTimestamp' | tail -20
-          echo "=== Pod logs ==="
-          kubectl logs -l app=ccap-admin -n ccap --tail=50 || true
-          kubectl logs -l app=ccap-admin -n ccap --previous --tail=50 || true
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            export KUBECONFIG=/home/ccap-deploy/.kube/config
+            echo "=== Pods ==="
+            kubectl get pods -n ccap -l app=ccap-admin
+            echo "=== Describe deployment ==="
+            kubectl describe deployment ccap-admin -n ccap
+            echo "=== Pod events ==="
+            kubectl get events -n ccap --sort-by='.lastTimestamp' | tail -20
+            echo "=== Pod logs ==="
+            kubectl logs -l app=ccap-admin -n ccap --tail=50 || true
+            kubectl logs -l app=ccap-admin -n ccap --previous --tail=50 || true
